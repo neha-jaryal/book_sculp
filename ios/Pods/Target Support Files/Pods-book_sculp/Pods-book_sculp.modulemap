@@ -1,0 +1,6 @@
+framework module Pods_book_sculp {
+  umbrella header "Pods-book_sculp-umbrella.h"
+
+  export *
+  module * { export * }
+}

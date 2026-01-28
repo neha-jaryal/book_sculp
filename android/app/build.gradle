@@ -1,0 +1,97 @@
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+
+/**
+ * This is the configuration block to customize your React Native Android app.
+ * By default you don't need to apply any configuration, just uncomment the lines you need.
+ */
+react {
+    /* Folders */
+    // root = file("../../")
+    // reactNativeDir = file("../../node_modules/react-native")
+    // codegenDir = file("../../node_modules/@react-native/codegen")
+    // cliFile = file("../../node_modules/react-native/cli.js")
+
+    /* Variants */
+    // debuggableVariants = ["liteDebug", "prodDebug"]
+
+    /* Bundling */
+    // nodeExecutableAndArgs = ["node"]
+    // bundleCommand = "ram-bundle"
+    // bundleConfig = file("../rn-cli.config.js")
+    // bundleAssetName = "MyApplication.android.bundle"
+    // entryFile = file("../js/MyApplication.android.js")
+    // extraPackagerArgs = []
+
+    /* Hermes Commands */
+    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
+    // hermesFlags = ["-O", "-output-source-map"]
+
+    /* Autolinking */
+    autolinkLibrariesWithApp()
+}
+
+/**
+ * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ */
+def enableProguardInReleaseBuilds = false
+
+/**
+ * The preferred build flavor of JavaScriptCore (JSC)
+ */
+def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
+
+android {
+    // Explicitly set versions for RN 0.73 + modern deps (gesture-handler, reanimated, navigation)
+    compileSdkVersion 34
+    buildToolsVersion "34.0.0"
+    ndkVersion "21.4.7075529"   // Stable for RN 0.73 – prevents NDK mismatch errors
+
+    namespace "com.book_sculp"
+
+    defaultConfig {
+        applicationId "com.book_sculp"
+        minSdkVersion 21                // Safe default for RN 0.73
+        targetSdkVersion 34             // Matches compileSdk – recommended for Android 14 compatibility
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            // Caution! In production, generate your own keystore.
+            signingConfig signingConfigs.debug
+            minifyEnabled enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+}
+
+dependencies {
+    // The version of react-native is set by the React Native Gradle Plugin
+    implementation("com.facebook.react:react-android")
+
+    // Optional: if you use WorkManager (e.g. background tasks) – keep or remove as needed
+    implementation 'androidx.work:work-runtime:2.9.1'
+
+    // Hermes / JSC selection (unchanged)
+    if (hermesEnabled.toBoolean()) {
+        implementation("com.facebook.react:hermes-android")
+    } else {
+        implementation jscFlavor
+    }
+}
