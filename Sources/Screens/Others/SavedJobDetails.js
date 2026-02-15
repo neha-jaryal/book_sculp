@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ScrollView
 } from "react-native";
 import {
   TextComponent,

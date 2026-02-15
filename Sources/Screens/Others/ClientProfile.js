@@ -169,7 +169,7 @@ export const ClientProfile = ({ route, navigation }) => {
         navigation={navigation}
       />
       <Loader loading={other?.isLoading} />
-      <ScrollView>
+      <ScrollView style={{ flex: 1, marginBottom: 100 }}>
         <View
           style={{
             ...Styles?.container,

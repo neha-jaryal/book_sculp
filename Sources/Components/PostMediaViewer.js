@@ -59,7 +59,12 @@ export const PostMediaViewer = ({
           renderItem={({ item, index }) => (
             <View
               key={`media-${index}-${item?.url || "no-url"}`}
-              style={{ width, height: containerHeight }}
+              style={{
+                width: width - 25,
+                height: containerHeight,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
             >
               <MediaSlide
                 item={item}

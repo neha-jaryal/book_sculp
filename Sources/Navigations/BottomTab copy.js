@@ -12,7 +12,7 @@ import { Stacks } from "./Stacks";
 
 const Tab = createBottomTabNavigator();
 
-const BottomTab = ({ route }) => {
+const BottomTabCopy = ({ route }) => {
   // const { guest } = route?.params;
   return (
     <Tab.Navigator
@@ -153,4 +153,4 @@ const BottomTab = ({ route }) => {
   );
 };
 
-export default BottomTab;
+export default BottomTabCopy;

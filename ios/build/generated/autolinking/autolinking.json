@@ -103,6 +103,31 @@
         }
       }
     },
+    "@react-native-clipboard/clipboard": {
+      "root": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/@react-native-clipboard/clipboard",
+      "name": "@react-native-clipboard/clipboard",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/@react-native-clipboard/clipboard/RNCClipboard.podspec",
+          "version": "1.16.3",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/@react-native-clipboard/clipboard/android",
+          "packageImportPath": "import com.reactnativecommunity.clipboard.ClipboardPackage;",
+          "packageInstance": "new ClipboardPackage()",
+          "buildTypes": [],
+          "libraryName": "rnclipboard",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/@react-native-clipboard/clipboard/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "@react-native-community/blur": {
       "root": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/@react-native-community/blur",
       "name": "@react-native-community/blur",
@@ -572,6 +597,36 @@
         }
       }
     },
+    "react-native-keyboard-controller": {
+      "root": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-keyboard-controller",
+      "name": "react-native-keyboard-controller",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-keyboard-controller/react-native-keyboard-controller.podspec",
+          "version": "1.20.7",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-keyboard-controller/android",
+          "packageImportPath": "import com.reactnativekeyboardcontroller.KeyboardControllerPackage;",
+          "packageInstance": "new KeyboardControllerPackage()",
+          "buildTypes": [],
+          "libraryName": "RNKC",
+          "componentDescriptors": [
+            "KeyboardControllerViewComponentDescriptor",
+            "KeyboardGestureAreaComponentDescriptor",
+            "OverKeyboardViewComponentDescriptor",
+            "KeyboardBackgroundViewComponentDescriptor"
+          ],
+          "cmakeListsPath": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-keyboard-controller/android/src/main/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "react-native-permissions": {
       "root": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-permissions",
       "name": "react-native-permissions",
@@ -706,6 +761,30 @@
             "RNSSafeAreaViewComponentDescriptor"
           ],
           "cmakeListsPath": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
+    "react-native-splash-screen": {
+      "root": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-splash-screen",
+      "name": "react-native-splash-screen",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-splash-screen/react-native-splash-screen.podspec",
+          "version": "3.3.0",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-splash-screen/android",
+          "packageImportPath": "import org.devio.rn.splashscreen.SplashScreenReactPackage;",
+          "packageInstance": "new SplashScreenReactPackage()",
+          "buildTypes": [],
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/anupjaryal/Desktop/Dero_Projects_Bucket/book_sculp/node_modules/react-native-splash-screen/android/build/generated/source/codegen/jni/CMakeLists.txt",
           "cxxModuleCMakeListsModuleName": null,
           "cxxModuleCMakeListsPath": null,
           "cxxModuleHeaderName": null,

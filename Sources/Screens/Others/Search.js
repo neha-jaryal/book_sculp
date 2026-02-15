@@ -1,635 +1,446 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  TextComponent,
-  Header,
-  NotificationCard,
-  VideoModal,
-  Tabs,
-  NoDataFound,
-} from "../../Components";
-import { Sizes, Colors, Images } from "../../Constants";
+import { Header, Skeletoning, TextComponent } from "../../Components";
+import { Colors, Images, Sizes } from "../../Constants";
 import { Styles } from "../../Styles";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import { routeName } from "../../Utility/routeName";
+import { Searchbar } from "react-native-paper";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { getSavedPost } from "../../Redux/Services/OtherServices";
-import { getData, storageKey } from "../../Utility/Storage";
-import { PostCard } from "../../Components/PostCard";
-import { useFocusEffect } from "@react-navigation/native";
+import Entypo from "react-native-vector-icons/Entypo";
+import {
+  getModelsList,
+  getSearchResults,
+} from "../../Redux/Services/OtherServices";
 import { useDispatch, useSelector } from "react-redux";
-import { routeName } from "../../Utility";
+import FastImage from "@d11/react-native-fast-image";
+import { getUserDetail } from "../../Redux/Services/AuthServices";
+import { useFocusEffect } from "@react-navigation/native";
+import { getData, storageKey } from "../../Utility/Storage";
+import { getAccountApproval } from "../../Utility";
+const screenWidth = Dimensions.get("window").width;
+const numColumns = 3;
+const imageSize = screenWidth / numColumns - 10;
 
-const { height: windowHeight } = Dimensions.get("window");
-const boxHeight = (windowHeight * 2) / 3.3;
-
-export const SavedJobDetails = ({ navigation }) => {
+export const Search = ({ route, navigation }) => {
   const dispatch = useDispatch();
-  const auth = useSelector((state) => state?.authReducer);
+  const flatListRef = useRef(null);
   const other = useSelector((state) => state?.otherReducer);
+  const auth = useSelector((state) => state?.authReducer);
 
-  const [heading, setHeading] = useState("Saved Jobs");
-  const [modal, setModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFor, setSearchFor] = useState("Model");
+  const [modelsList, setModelsList] = useState([]);
+  const [isBottomRefreshing, setIsBottomRefreshing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [postCards, setPostCards] = useState([]);
-  const [jobsList, setJobsList] = useState([]);
-  const [tab, setTab] = useState("social");
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [currentVisibleIndex, setCurrentVisibleIndex] = useState(0);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(0);
+  const [approvalStatus, setApprovalStatus] = useState(false);
+  const [totalResult, setTotalResult] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState("");
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+  const [filterRoute, setFilterRoute] = useState(
+    route?.params?.routeName == routeName?.FILTER,
+  );
+  const filterData = other?.filterData;
+  const subscriptionProIds = [103, 104, 105, 106];
+
+  useEffect(() => {
+    getAccountApprovalStatus();
+    getSearchResultDetails();
+  }, []);
+
+  const getAccountApprovalStatus = async () => {
+    const status = await getData(storageKey?.APPROVAL_STATUS);
+    const userrole = await getData(storageKey?.USER_ROLE);
+    setUserRole(userrole);
+    setApprovalStatus(JSON.parse(status));
+  };
 
   useFocusEffect(
-    React.useCallback(() => {
-      getAllPostListing("social");
-      setTab("social");
-    }, [])
+    useCallback(() => {
+      setPage(1);
+      if (route?.params?.routeName == routeName?.FILTER) {
+        setFilterRoute(true);
+        setLoading(true);
+        const talentType = filterData?.talent_type || "Model";
+        setSearchFor(talentType);
+        setSearchQuery("");
+        getFilterResultDetails();
+      } else {
+        setFilterRoute(false);
+      }
+    }, [route?.params]),
   );
 
-  const getAllPostListing = async (type) => {
-    const userID = await getData(storageKey?.USER_ID);
-    if (!userID) return;
+  const onChangeSearch = (query) => {
+    setPage(1);
+    setLastPage(1);
+    setSearchQuery(query);
+    setSearching(false);
+  };
 
-    const body = {
-      user_id: JSON.parse(userID),
-      post_type: type === "social" ? "211" : type === "portfolios" ? 212 : 213,
-    };
-
-    const res = await dispatch(getSavedPost(body));
-    if (res?.status === 200) {
-      setTab(type);
-      if (type === "jobs") {
-        setJobsList(res?.results || []);
-      } else {
-        setPostCards(res?.results || []);
-      }
+  const fetchList = async (body, type) => {
+    const res = await dispatch(getSearchResults(body));
+    if (res?.status == 200) {
+      const { search, pagination } = res.results;
+      console.log("res.resultsres.results----", res.results);
+      setLastPage(pagination?.end_page);
+      setTotalResult(pagination?.total_result);
+      setModelsList(search);
       setRefreshing(false);
+      setSearching(true);
+      setPage(2);
+      setLoading(false);
     }
   };
 
-  const onRefresh = useCallback(() => {
+  const getSearchResultDetails = async (type) => {
+    let userId = await getData(storageKey?.USER_ID);
+    setLoading(true);
+    const body = {
+      keyword: type != "clear" && searchQuery,
+      page_number: 1,
+      per_page: 15,
+      talent_type: filterData?.talent_type || searchFor,
+      user_type: filterData?.user_type || "searchFor",
+      user_id: userId,
+    };
+    await fetchList(body, searchFor);
+    setLoading(false);
+    if (type === "clear") {
+      setSearchQuery("");
+    }
+  };
+
+  const getFilterResultDetails = async () => {
+    let userId = await getData(storageKey?.USER_ID);
+    const body = {
+      ...filterData,
+      page_number: 1,
+      per_page: 15,
+      user_id: userId,
+    };
+    await fetchList(body, searchFor);
+  };
+
+  const getModelDetails = async (item) => {
+    if (!approvalStatus && searchFor == "Model Kid") {
+      getAccountApproval(true, navigation, auth);
+      return;
+    }
+    const body = { user_id: item?.post_meta_details?.user_id };
+    const res = await dispatch(getUserDetail(body));
+    if (res?.status === 200) {
+      if (res.results?.user_data?.user_role == 13) {
+        navigation?.navigate(routeName?.PHOTOGRAPHER_PROFILE, {
+          photographerData: res.results,
+          userId: item?.post_meta_details?.user_id,
+        });
+      } else if (
+        res.results?.user_data?.user_role == 11 ||
+        res.results?.user_data?.user_role == 15
+      ) {
+        navigation?.navigate(routeName?.MODEL_PROFILE, {
+          modelData: res.results,
+          listData: modelsList,
+        });
+      }
+    }
+  };
+
+  const endReached = async () => {
+    if (isFetchingMore || (lastPage && page >= lastPage)) {
+      return;
+    }
+
+    if (page == lastPage) {
+      setIsBottomRefreshing(false);
+      setIsFetchingMore(false);
+      return null;
+    } else {
+      setIsBottomRefreshing(true);
+      setIsFetchingMore(true);
+      try {
+        const userId = await getData(storageKey?.USER_ID);
+        const body = searchQuery
+          ? {
+              keyword: searchQuery,
+              page_number: page + 1,
+              per_page: 20,
+              talent_type: filterData?.talent_type,
+              user_type: filterData?.user_type,
+              user_id: userId,
+            }
+          : {
+              ...filterData,
+              page_number: page + 1,
+              per_page: 20,
+              user_id: userId,
+            };
+
+        const res = await dispatch(getSearchResults(body));
+
+        if (res?.status === 200) {
+          const newResults = res?.results?.search || [];
+
+          if (newResults.length > 0) {
+            const uniqueUsers = newResults.filter(
+              (u) =>
+                !modelsList.some(
+                  (existing) =>
+                    existing.post_meta_details?.user_id ===
+                    u.post_meta_details?.user_id,
+                ),
+            );
+
+            setModelsList((prev) => [...prev, ...uniqueUsers]);
+            setPage((prev) => prev + 1);
+            setLastPage(res.results.pagination?.number_pages || prevLastPage);
+          } else {
+            setLastPage(page); // stop further requests
+          }
+        }
+      } finally {
+        setIsFetchingMore(false);
+        setIsBottomRefreshing(false);
+        setLoading(false);
+      }
+    }
+  };
+
+  const onRefresh = async () => {
+    setPage(1);
+    await getFilterResultDetails();
     setRefreshing(true);
-    getAllPostListing(tab);
-  }, [tab]);
-
-  const handleCardPress = (card) => {
-    setSelectedCard(card);
-    setModal(true);
   };
 
-  // Detect visible card for video play/pause
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 60, // 60% visible = "in center"
-  }).current;
-
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      const mostVisible = viewableItems.reduce((prev, curr) =>
-        curr.itemVisiblePercent > prev.itemVisiblePercent ? curr : prev
-      );
-      setCurrentVisibleIndex(mostVisible.index);
-    }
-  }).current;
-
-  const options = [
-    { name: "Social Post", type: "social" },
-    { name: "Portfolios", type: "portfolios" },
-    { name: "Jobs", type: "jobs" },
-  ];
-
-  const ListEmptyComponent = () => {
-    return (
+  const ListEmptyComponent = () =>
+    !loading || !other?.isLoading ? (
       <View style={{ marginTop: 200, alignSelf: "center" }}>
         <TextComponent
-          text={"No Data Found"}
-          size={Sizes?.xl}
-          color={Colors?.darkgrey}
-        />
-      </View>
-    );
-  };
-
-  const renderItem = ({ item, index }) => {
-    return (
-      <View style={{ ...Styles.container, marginBottom: 10 }} key={index}>
-        <Image
-          source={{ uri: item?.profile_image }}
-          style={{
-            ...styling.profileImg,
-            borderWidth: 3,
-            borderColor: Colors.lightBlue,
-            position: "absolute",
-            top: -20,
-          }}
-        />
-        <TouchableOpacity
-          style={{ alignSelf: "flex-end", marginHorizontal: 10 }}
-          onPress={() =>
-            item?.post_meta_details?.saved_status === 1
-              ? handleSavePost(item, "unsaved")
-              : handleSavePost(item, "saved")
-          }
-        >
-          <FontAwesome
-            name={item?.post_meta_details?.saved_status === 1 ? "bookmark" : "bookmark-o"}
-            size={25}
-            color={Colors.blue}
-          />
-        </TouchableOpacity>
-
-        <View style={{ ...Styles.flexRow, marginTop: 15 }}>
-          <TextComponent
-            text={`${item?.profile?.post_title}`}
-            size={Sizes.l}
-            style={{ textTransform: "capitalize", width: 200 }}
-            loading={other?.isLoading}
-            width={150}
-          />
-          {item?.profile?.post_date && (
-            <TextComponent
-              text={timeSince(convertUTCToLocalTime(item?.profile?.post_date))}
-              size={Sizes.s}
-              color={Colors.darkgrey}
-              fontWeight="400"
-              style={{ textAlign: "right", alignSelf: "flex-end", width: 100 }}
-              loading={other?.isLoading}
-              width={50}
-            />
-          )}
-        </View>
-
-        <TextComponent
-          text={`${item?.post_meta_details?.model_type_req}`}
-          size={Sizes.s}
-          style={{ marginVertical: 10, textTransform: "capitalize", width: 100 }}
-          loading={other?.isLoading}
-          fontWeight="400"
-          width={150}
+          text="No Data Found"
+          size={Sizes.xl}
           color={Colors.darkgrey}
         />
+      </View>
+    ) : null;
 
-        {item?.profile?.post_content && (
-          <TextComponent
-            text={item?.profile?.post_content}
-            size={Sizes.s}
-            color={Colors.darkgrey}
-            fontWeight="400"
-            style={{ textTransform: "capitalize", width: "90%" }}
-            loading={other?.isLoading}
-            width={200}
-          />
-        )}
-
-        <View style={Styles.separator} />
-
-        <View style={{ ...Styles.flexRow, paddingVertical: 6, paddingHorizontal: 8 }}>
-          <View style={{ width: "35%" }}>
-            <TextComponent
-              text="Project Type:"
-              size={Sizes.s}
-              style={{ paddingVertical: 4 }}
-              loading={other?.isLoading}
-              width={80}
-            />
-            <TextComponent
-              text={item?.post_meta_details?._project_type}
-              size={Sizes.s}
-              color={Colors.darkgrey}
-              fontWeight="400"
-              style={{ textTransform: "capitalize" }}
-              loading={other?.isLoading}
-              width={100}
-            />
-          </View>
-          <View style={{ borderRightWidth: 0.5, borderColor: Colors.grey, height: 40 }} />
-          <View style={{ paddingRight: 10, width: "40%" }}>
-            <TextComponent
-              text="Project Budget:"
-              size={Sizes.s}
-              style={{ paddingVertical: 4 }}
-              loading={other?.isLoading}
-              width={100}
-            />
-            <TextComponent
-              text={
-                item?.post_meta_details?.project_budget
-                  ? "$" + item?.post_meta_details?.project_budget
-                  : item?.post_meta_details?._hourly_rate
-                  ? `$${item?.post_meta_details?._hourly_rate} (${item?.post_meta_details?._estimated_hours} hours)`
-                  : "0"
-              }
-              size={Sizes.s}
-              color={Colors.darkgrey}
-              fontWeight="400"
-              loading={other?.isLoading}
-              width={100}
-            />
-          </View>
-        </View>
-
-        <View style={Styles.separator} />
-
-        {item?.post_meta_details?.country && (
-          <>
-            <View style={{ ...Styles.row, justifyContent: "center" }}>
-              <FontAwesome name="flag" size={20} color={Colors.lightBlue} />
-              <TextComponent
-                text={" " + item?.post_meta_details?.country + " | " + item?.post_meta_details?.city}
-                size={Sizes.s}
-                color={Colors.darkgrey}
-                fontWeight="400"
-                style={{ padding: 4, textAlign: "center" }}
-                loading={other?.isLoading}
-                width={200}
-              />
-            </View>
-            <View style={Styles.separator} />
-          </>
-        )}
-
-        <View style={{ ...Styles.flexRow, paddingVertical: 4, paddingHorizontal: 8 }}>
-          <View style={{ width: "35%" }}>
-            <TextComponent
-              text="Expert:"
-              size={Sizes.s}
-              style={{ paddingVertical: 4 }}
-              loading={other?.isLoading}
-              width={100}
-            />
-            <TextComponent
-              text={item?.post_meta_details?.project_level}
-              size={Sizes.s}
-              color={Colors.darkgrey}
-              fontWeight="400"
-              style={{ textTransform: "capitalize" }}
-              loading={other?.isLoading}
-              width={80}
-            />
-          </View>
-          <View style={{ borderRightWidth: 0.5, borderColor: Colors.grey, height: 40 }} />
-          <View style={{ width: "35%", paddingRight: 10 }}>
-            <TextComponent
-              text="Proposal:"
-              size={Sizes.s}
-              style={{ paddingVertical: 4 }}
-              loading={other?.isLoading}
-              width={100}
-            />
-            <TextComponent
-              text={item?.post_meta_details?.proposal_count}
-              size={Sizes.s}
-              color={Colors.darkgrey}
-              fontWeight="400"
-              loading={other?.isLoading}
-              width={80}
-            />
-          </View>
-        </View>
-
-        <View style={Styles.separator} />
-
-        {item?.post_meta_details?.skills_names &&
-          item?.post_meta_details?.skills_names?.length !== 0 && (
-            <>
-              <View style={{ ...Styles.row, justifyContent: "center" }}>
-                <TextComponent text="Skills : " size={Sizes.s} loading={other?.isLoading} width={80} />
-                {typeof item?.post_meta_details?.skills_names === "object" ? (
-                  item.post_meta_details.skills_names.map((ele, idx) => (
-                    <TextComponent
-                      key={idx}
-                      text={
-                        idx === item.post_meta_details.skills_names.length - 1
-                          ? ele?.value
-                            ? ele.value + ", "
-                            : ele
-                          : ""
-                      }
-                      size={Sizes.s}
-                      color={Colors.darkgrey}
-                      fontWeight="400"
-                      style={{ padding: 2 }}
-                      loading={other?.isLoading}
-                      width={80}
-                      numberOfLines={1}
-                    />
-                  ))
-                ) : (
-                  <TextComponent
-                    text={item.post_meta_details.skills_names}
-                    size={Sizes.s}
-                    color={Colors.darkgrey}
-                    fontWeight="400"
-                    style={{ padding: 2 }}
-                    loading={other?.isLoading}
-                    width={80}
-                    numberOfLines={1}
-                  />
-                )}
-              </View>
-              <View style={Styles.separator} />
-            </>
-          )}
-
-        <View style={{ ...Styles.flexRow, paddingVertical: 4, paddingHorizontal: 8 }}>
-          {item?.post_meta_details?._project_type === "Hourly Rate" ? (
-            <>
-              <View style={{ width: "40%" }}>
-                <TextComponent
-                  text="Estimated Hours:"
-                  size={Sizes.s}
-                  style={{ paddingVertical: 4 }}
-                  loading={other?.isLoading}
-                  width={80}
-                />
-                <TextComponent
-                  text={item?.post_meta_details?._estimated_hours}
-                  size={Sizes.s}
-                  color={Colors.darkgrey}
-                  fontWeight="400"
-                  style={{ textTransform: "capitalize" }}
-                  loading={other?.isLoading}
-                  width={80}
-                />
-              </View>
-              <View style={{ borderRightWidth: 0.5, borderColor: Colors.grey, height: 40 }} />
-              <View style={{ width: "35%", paddingRight: 10 }}>
-                <TextComponent
-                  text="Hourly Rate:"
-                  size={Sizes.s}
-                  style={{ paddingVertical: 4 }}
-                  loading={other?.isLoading}
-                  width={80}
-                />
-                <TextComponent
-                  text={item?.post_meta_details?._hourly_rate}
-                  size={Sizes.s}
-                  color={Colors.darkgrey}
-                  fontWeight="400"
-                  loading={other?.isLoading}
-                  width={80}
-                />
-              </View>
-            </>
-          ) : null}
-        </View>
-
-        <View style={Styles.separator} />
-
-        {!other?.isLoading && (
-          <TouchableOpacity
-            style={{
-              ...Styles.smallButton,
-              backgroundColor: Colors.blue,
-              width: "35%",
-              alignSelf: "flex-end",
-            }}
-            onPress={() => handleViewJob(item)}
-          >
-            <TextComponent text="View Job" color={Colors.white} size={Sizes.s} />
-          </TouchableOpacity>
-        )}
+  const ListFooterComponent = () =>
+    isBottomRefreshing && (
+      <View style={styling.footer}>
+        <ActivityIndicator color="black" style={{ marginRight: 8 }} />
+        <TextComponent text="Loading more..." size={Sizes.l} />
       </View>
     );
-  };
 
-  return (
-    <>
-      <Header text={"Saved Collection"} navigation={navigation} />
-
-      <View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            width: "100%",
-          }}
-          style={{
-            marginTop: 15,
-            marginHorizontal: 10,
-          }}
+  const ListHeaderComponent = useMemo(
+    () => (
+      <View style={Styles.row}>
+        <Searchbar
+          placeholder="Start Your Search..."
+          onChangeText={onChangeSearch}
+          value={searchQuery}
+          icon={() => <FontAwesome name="search" color={Colors.darkgrey} />}
+          style={styling.searchBar}
+          inputStyle={{ left: -10, fontSize: Sizes.s, paddingBottom: 9 }}
+          clearIcon={() =>
+            searchQuery && (
+              <TouchableOpacity
+                onPress={() => {
+                  getSearchResultDetails("clear");
+                }}
+              >
+                <Entypo name="cross" size={25} color={Colors.white} />
+              </TouchableOpacity>
+            )
+          }
+        />
+        <TouchableOpacity
+          onPress={getSearchResultDetails}
+          style={styling.searchBtn}
         >
-          {options?.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => {
-                getAllPostListing(item.type);
-                setTab(item.type);
-              }}
-              style={{
-                ...Styles.smallButton,
-                backgroundColor: tab === item.type ? Colors.themeColor : Colors.white,
-                borderColor: tab !== item.type ? Colors.themeColor : Colors.white,
-                borderWidth: 1,
-                marginRight: 10,
-                width: 115,
-              }}
-            >
-              <TextComponent
-                text={item.name}
-                color={tab === item.type ? Colors.white : Colors.black}
-                size={Sizes.s}
-                fontWeight="400"
-                style={{ paddingHorizontal: 10 }}
-              />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+          <FontAwesome
+            name="search"
+            color={Colors.white}
+            size={19}
+            style={{ padding: 10, paddingHorizontal: 20 }}
+          />
+        </TouchableOpacity>
+      </View>
+    ),
+    [searchQuery], // only update when query changes
+  );
 
-        {tab === "jobs" ? (
-          jobsList?.length !== 0 ? (
-            <FlatList
-              data={jobsList}
-              contentContainerStyle={{
-                marginTop: 50,
-                paddingBottom: 20,
-              }}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={renderItem}
-              ListEmptyComponent={ListEmptyComponent}
-              onEndReachedThreshold={0.9}
+  const renderItem = useCallback(
+    ({ item }) => {
+      const subId = item?.post_meta_details?.subscription_pro_id;
+      const rating = item?.post_meta_details?.user_rating || 0;
+      const displayStar =
+        rating === 5 ? "star" : rating > 0 ? "star-half-o" : "star-o";
+      return (
+        <TouchableOpacity
+          onPress={() => getModelDetails(item)}
+          style={{ margin: 2 }}
+        >
+          {subscriptionProIds.includes(subId) && (
+            <View style={styling.crownIcon}>
+              <MaterialCommunityIcons
+                name="crown"
+                color={
+                  subId === 103 || subId === 105 ? Colors.orange : Colors.yellow
+                }
+                size={30}
+              />
+            </View>
+          )}
+
+          {(loading && !isBottomRefreshing) ||
+          (other?.isLoading && !isBottomRefreshing) ? (
+            <Skeletoning
+              width={imageSize}
+              height={imageSize + 30}
+              horizontal={0}
             />
           ) : (
-            <TextComponent
-              text={"No Data Found"}
-              size={Sizes.l}
-              fontWeight="400"
-              style={{ textAlign: "center" }}
+            <FastImage
+              source={{ uri: item?.profile_image }}
+              style={styling.image}
+              transition={false}
             />
-          )
-        ) : (
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={Colors.darkgrey}
-              />
-            }
-            ListEmptyComponent={() =>
-              other?.isLoading || auth?.isLoading ? null : (
-                <View style={{ marginTop: 200, alignItems: "center" }}>
-                  <TextComponent
-                    text="No Social Post Uploaded"
-                    size={Sizes.s}
-                    color={Colors.darkgrey}
-                  />
-                </View>
-              )
-            }
-            nestedScrollEnabled={true}
-            data={postCards}
-            keyExtractor={(item, index) => index.toString()}
-            viewabilityConfig={viewabilityConfig}
-            onViewableItemsChanged={onViewableItemsChanged}
-            renderItem={({ item, index }) => (
-              <View style={{ minHeight: boxHeight }}>
-                <PostCard
-                  paused={currentVisibleIndex !== index}
-                  cardData={item}
-                  index={index}
-                  isLoading={false}
-                  type={
-                    item?.gallery?.gallery_imgs?.length > 0
-                      ? "image"
-                      : item?.gallery?.videos?.length > 0
-                      ? "Vedio"
-                      : null
-                  }
-                  navigation={navigation}
-                  modal={modal}
-                  setModal={setModal}
-                  onPress={() => {
-                    setSelectedCard(item);
-                    setModal(true);
-                  }}
-                  onReelTap={() => {
-                    setSelectedCard(item);
-                    setModal(true);
-                  }}
-                  refreshList={getAllPostListing}
-                  postType="social"
-                  userId={true}
-                />
-              </View>
-            )}
-          />
-        )}
-      </View>
+          )}
+        </TouchableOpacity>
+      );
+    },
+    [modelsList, loading, filterRoute, other?.isLoading],
+  );
 
-      {modal && selectedCard && (
-        <VideoModal
-          cards={postCards}
-          uri={selectedCard?.uri}
-          modal={modal}
-          setModal={setModal}
-          navigation={navigation}
-        />
-      )}
-    </>
+  const skeletonData = Array.from({ length: 21 }, (_, i) => ({
+    id: `skeleton-${i}`,
+  }));
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1 }}
+    >
+      <Header
+        text={
+          filterRoute && totalResult
+            ? `${totalResult} Result Found`
+            : "Refine your search"
+        }
+        filter={Boolean(searchFor)}
+        navigation={navigation}
+        onFilterIcon={() => navigation?.navigate(routeName?.FILTER)}
+      />
+
+      <FlatList
+        ref={flatListRef}
+        data={modelsList.length > 0 ? modelsList : skeletonData}
+        keyExtractor={(item, index) =>
+          item?.post_meta_details?.user_id?.toString() ?? `skeleton-${index}`
+        }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        onEndReached={endReached}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={ListEmptyComponent}
+        ListFooterComponent={ListFooterComponent}
+        ListHeaderComponent={ListHeaderComponent}
+        ListHeaderComponentStyle={{ marginBottom: 15 }}
+        renderItem={renderItem}
+        numColumns={numColumns}
+        contentContainerStyle={{ alignItems: "center", paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      />
+    </KeyboardAvoidingView>
   );
 };
 
 const styling = StyleSheet.create({
-  headingView: {
-    borderLeftWidth: 4,
-    borderColor: Colors?.themeColor,
-    backgroundColor: Colors?.white,
-    borderRadius: 10,
-    marginTop: 15,
-    paddingVertical: 25,
+  profileImg: { width: 355, height: 350, borderRadius: 10 },
+  itemContainer: {
+    ...Styles.container,
+    padding: 0,
+    position: "relative",
+    marginBottom: 20,
   },
-  imageIconView: {
-    marginLeft: 12,
-    marginRight: 5,
+  crownIcon: {
+    backgroundColor: Colors.white,
+    borderRadius: 100,
+    position: "absolute",
+    left: 10,
+    top: 10,
+    zIndex: 99,
+    padding: 5,
+  },
+  infoOverlay: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    position: "absolute",
+    bottom: 0,
+    width: 355,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderBottomEndRadius: 10,
+    borderBottomStartRadius: 10,
+  },
+  shadowText: {
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: -2, height: 0 },
+    textShadowRadius: 5,
+  },
+  searchBar: {
+    borderRadius: 10,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    marginHorizontal: 10,
+    marginTop: 15,
+    height: 45,
+    width: "80%",
+    backgroundColor: Colors.white,
+  },
+  searchBtn: {
+    borderRadius: 10,
+    backgroundColor: Colors.themeColor,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+    alignSelf: "flex-end",
+    height: 45,
+    justifyContent: "center",
+    right: 10,
+  },
+  footer: {
+    padding: 10,
+    borderRadius: 4,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  image: {
+    width: imageSize,
+    height: imageSize + 30,
+    borderRadius: 5,
   },
 });
-///    return (
-//   <TouchableOpacity
-//     onPress={() => getModelDetails(item)}
-//     style={styling.itemContainer}
-//   >
-// {subscriptionProIds.includes(subId) && (
-//   <View style={styling.crownIcon}>
-//     <MaterialCommunityIcons
-//       name="crown"
-//       color={
-//         subId === 103 || subId === 105 ? Colors.orange : Colors.yellow
-//       }
-//       size={30}
-//     />
-//   </View>
-// )}
-
-//     <FastImage
-//       source={{
-//         uri: item?.profile_image,
-//         priority: FastImage.priority.normal,
-//       }}
-//       style={styling.profileImg}
-//       resizeMode={FastImage.resizeMode.cover}
-//       transition={false}
-//     />
-
-// <View style={styling.infoOverlay}>
-//   <View style={Styles.flexRow}>
-//     <TextComponent
-//       text={" ◉ " + item?.post_meta_details?.display_name}
-//       size={Sizes.l}
-//       color={Colors.white}
-//       width={120}
-//       style={styling.shadowText}
-//       loading={other?.isLoading}
-//     />
-//     <View
-//       style={{
-//         flexDirection: "row",
-//         alignItems: "center",
-//       }}
-//     >
-//       <FontAwesome
-//         name={displayStar}
-//         color={Colors.yellow}
-//         size={18}
-//         style={{ right: 5 }}
-//       />
-//       <TextComponent
-//         text={rating.toString()}
-//         size={Sizes.l}
-//         color={Colors.white}
-//         width={10}
-//         fontWeight="400"
-//       />
-//     </View>
-//   </View>
-//       <View style={{ ...Styles.flexRow, marginVertical: 6 }}>
-//         {item?.post_meta_details?.country && (
-//           <TextComponent
-//             text={`${item?.post_meta_details?.country} | ${item?.post_meta_details?.city}`}
-//             size={Sizes.s}
-//             color={Colors.white}
-//             width={150}
-//           />
-//         )}
-//         {item?.post_meta_details?.perhour_rate && (
-//           <TextComponent
-//             text={`$${item?.post_meta_details?.perhour_rate} / hr`}
-//             size={Sizes.s}
-//             color={Colors.white}
-//             width={150}
-//           />
-//         )}
-//       </View>
-//     </View>
-//   </TouchableOpacity>
-// );

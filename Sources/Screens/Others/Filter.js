@@ -1059,7 +1059,7 @@ export const Filter = ({ route, navigation }) => {
       ) : null}
 
       <ScrollView>
-        <View style={{ ...Styles?.container, marginTop: 10 }}>
+        <View style={{ ...Styles?.container, paddingBottom: 100 }}>
           <List.Section style={{ backgroundColor: Colors?.white }}>
             <List.Accordion
               isExpanded={expanded}

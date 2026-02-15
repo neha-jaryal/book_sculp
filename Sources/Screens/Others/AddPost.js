@@ -295,7 +295,7 @@ export const AddPost = ({ navigation }) => {
   };
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1,  }}
       enabled={true}
       behavior={Platform?.OS == "ios" ? "padding" : null}
     >
@@ -304,7 +304,7 @@ export const AddPost = ({ navigation }) => {
         text={postType == 2 ? "Add New Portfolio" : "Add New Social Post"}
       />
       <Loader loading={other?.isLoading} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom:  100  }}>
         <View style={{ ...Styles?.container, marginBottom: 10 }}>
           <Tabs
             leftTitle="Social Post"

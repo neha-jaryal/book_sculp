@@ -95,22 +95,41 @@ const MediaSlide = ({
                 setLoading(false);
                 setError(true);
               }}
+              onLoadEnd={() => setLoading(false)}
             />
           ) : (
-            <Image
-              source={{ uri: item?.url }}
-              style={[styles.media, { height }]}
-              resizeMode="cover"
-              onLoadStart={() => {
-                setLoading(true);
-                setError(false);
-              }}
-              onLoadEnd={() => setLoading(false)}
-              onError={() => {
-                setLoading(false);
-                setError(true);
-              }}
-            />
+            <View style={styles.container}>
+              {/* Blurred background image */}
+              <Image
+                source={{ uri: item?.url }}
+                style={StyleSheet.absoluteFillObject} // fills the container
+                blurRadius={10} // adjust blur strength (10-30 usually looks good)
+              />
+
+              {/* Semi-transparent overlay to make blur softer */}
+              <View
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  { backgroundColor: "rgba(0,0,0,0.4)" },
+                ]}
+              />
+
+              {/* Main image on top */}
+              <Image
+                source={{ uri: item?.url }}
+                style={[styles.media, { height }]}
+                resizeMode="contain"
+                // onLoadStart={() => {
+                //   setLoading(true);
+                //   setError(false);
+                // }}
+                // onLoadEnd={() => setLoading(false)}
+                // onError={() => {
+                //   setLoading(false);
+                //   setError(true);
+                // }}
+              />
+            </View>
           )}
 
           {loading && (
@@ -155,6 +174,23 @@ const MediaSlide = ({
 export default MediaSlide;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "black",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  blurBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.1)", // or dark transparent
+    backdropFilter: "blur(20px)", // iOS + modern Android
+    // Fallback for older Android
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+  media: {
+    width: "100%",
+    height: "100%",
+  },
   wrapper: {
     width: "100%",
     alignItems: "center",

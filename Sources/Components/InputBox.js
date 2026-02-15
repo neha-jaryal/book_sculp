@@ -6,28 +6,34 @@ import {
   Image,
   Platform,
   ScrollView,
-  Text,
   Keyboard,
+  Text,
 } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import {
+  Sizes,
+  Images,
+  Colors,
+  CountryNames,
+  dimensionheight,
+} from "../Constants";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import CountryPicker from "react-native-country-codes-picker"; // ← NEW PACKAGE
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import Entypo from "react-native-vector-icons/Entypo";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import CountryCodesPicker from "react-native-country-codes-picker";
 import moment from "moment";
-import { Sizes, Images, Colors, dimensionheight } from "../Constants";
-import { Styles } from "../Styles";
 import { InputField } from "./InputField";
 import { ErrorMessage } from "./ErrorMessage";
 import { TextComponent } from "./TextComponent";
 import Modal from "react-native-modal";
+import { Styles } from "../Styles";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { Button } from "./Button";
 import { convertTime } from "../Utility";
 import { useFocusEffect } from "@react-navigation/native";
 
-export const InputBox = (props) => {
+export const InputBox = ({ ...props }) => {
   const {
     type,
     icon,
@@ -36,9 +42,9 @@ export const InputBox = (props) => {
     options,
     onChangeText,
     setDate,
-    date = new Date(),
+    date,
     setTime,
-    time = new Date(),
+    time,
     span,
     setValue,
     style,
@@ -67,85 +73,111 @@ export const InputBox = (props) => {
     onVerify,
   } = props;
 
-  const [isVisible, setIsVisible] = useState(true); // password visibility
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [timePickerVisible, setTimePickerVisible] = useState(false);
-  const [isModalVisible, setModalVisible] = useState(false); // multiselect modal
-  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState({
-    code: "US",
-    dial_code: "+1",
-    name: "United States",
-  });
-
+  const [open, setOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [selectedItem, setSelectedItem] = useState("");
+  const [datePicker, setDatePicker] = useState(false);
+  const [datePicked, setDatePicked] = useState(false);
+  const today = moment();
+  const newToday = moment();
+  const minDate = today.subtract(13, "years");
+  const talentMinDate = newToday.subtract(14, "years");
+  const newDate = new Date();
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [autoFocus, setAutoFocus] = useState(false);
+  const [customTimer, setCustomTimer] = useState(true);
+  const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
+  const [currentDate, setCurrentDate] = useState(false);
   const inputRef = useRef(null);
 
-  const today = moment().subtract(13, "years").toDate();
-  const talentMinDate = moment().subtract(14, "years").toDate();
+  // New state for country-codes-picker
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(null); // { name, code, dial_code, flag }
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setCustomTimer(true);
+    }, [customTime]),
+  );
 
   useEffect(() => {
-    if (callingCode) {
-      setSelectedCountry((prev) => ({
-        ...prev,
-        dial_code: `+${callingCode}`,
-      }));
+    if (showDate) {
+      if (new Date(date).toDateString() == newDate?.toDateString()) {
+        setCurrentDate(true);
+      } else {
+        setCurrentDate(false);
+      }
+    }
+  }, [props, showDate, currentDate]);
+
+  // Optional: if you want to initialize selectedCountry from callingCode
+  useEffect(() => {
+    if (callingCode && !selectedCountry) {
+      // You can pre-select if needed (new lib doesn't require manual mapping)
     }
   }, [callingCode]);
 
-  const handleDateChange = (event, selectedDate) => {
-    if (event.type === "dismissed") {
-      setDatePickerVisible(false);
-      return;
+  const onDateSelected = (event, value) => {
+    if (showDate) {
+      setCurrentDate(false);
     }
-
-    const newDate = selectedDate || date;
-    setDate(newDate);
-    setDatePickerVisible(Platform.OS === "ios");
-  };
-
-  const handleTimeChange = (event, selectedTime) => {
-    if (event.type === "dismissed") {
-      setTimePickerVisible(false);
-      return;
+    if (event?.type == "dismissed") {
+      setDate(new Date());
+      setDatePicker(false);
+    } else {
+      let dateee = moment(value).format("LL");
+      setDatePicker(Platform.OS == "ios");
+      if (new Date(value)?.toDateString() == newDate?.toDateString()) {
+        setCurrentDate(true);
+        setDate(value);
+      } else {
+        setCurrentDate(false);
+        setDate(value);
+      }
     }
-
-    const newTime = selectedTime || time;
-    setTime(newTime);
-    setTimePickerVisible(Platform.OS === "ios");
   };
 
-  const handleCountrySelect = (item) => {
-    setSelectedCountry(item);
-    setCallingCode(item.dial_code.replace("+", ""));
-    setCountryPickerVisible(false);
-  };
-
-  const togglePasswordVisibility = () => setIsVisible((prev) => !prev);
-
-  const handlingCardNumber = (number) => {
-    let cleaned = number.replace(/\s?/g, "").replace(/(\d{4})/g, "$1 ").trim();
-    setValue(cleaned);
-  };
-
-  const handlingCardExpiry = (dateStr) => {
-    if (dateStr.indexOf(".") >= 0 || dateStr.length > 5) return;
-    let formatted = dateStr;
-    if (dateStr.length === 2 && value.length === 1) {
-      formatted += "/";
+  const handleDatePicker = () => {
+    if (!disable) {
+      setDatePicker(!datePicker);
+      if (Platform?.OS == "ios") {
+        setDate(newDate);
+        setCurrentDate(true);
+      }
+    } else {
+      setDate(date);
     }
-    setValue(formatted);
   };
+
+  const onTimeSelected = (event, value) => {
+    if (event?.type == "dismissed") {
+      setTime(new Date());
+      setDatePicker(false);
+    } else {
+      setCustomTimer(false);
+      setDatePicked(true);
+      setDatePicker(Platform.OS == "ios");
+      setTime(new Date(value));
+    }
+  };
+
+  let arr = [];
+  const requireMessage = "This field is required";
 
   const selectItem = (index) => {
-    let arr = value ? [...value] : [];
-    const exists = value?.some((obj) =>
-      obj.id ? obj.id === index.id : obj.value === index.value
-    );
-
-    if (exists) {
-      arr = arr.filter((item) =>
-        item.id ? item.id !== index.id : item.value !== index.value
-      );
+    if (value) {
+      arr = [...value];
+      if (
+        value?.some((obj) =>
+          obj.id ? obj.id === index.id : obj.value === index.value,
+        )
+      ) {
+        arr = value?.filter((item) =>
+          item.id ? item.id !== index.id : item.value !== index.value,
+        );
+      } else {
+        arr.push(index);
+      }
     } else {
       arr.push(index);
     }
@@ -153,558 +185,870 @@ export const InputBox = (props) => {
   };
 
   const handleCheckBox = (ele) => {
-    let arr = value ? [...value] : [];
-    const target = ele?.value || ele?.name;
-
-    if (arr.includes(target)) {
-      arr = arr.filter((item) => item !== target);
+    let arr = [];
+    if (value?.includes(ele?.value)) {
+      arr = value?.filter((item) => item != ele?.value);
+      setState({ ...state, value: arr });
+    } else if (value?.includes(ele?.name)) {
+      arr = value?.filter((item) => item != ele?.name);
+      setState({ ...state, value: arr });
     } else {
-      arr.push(target);
+      if (ele?.name) {
+        value?.push(ele?.name);
+      } else {
+        value?.push(ele?.value);
+      }
+      setState({ ...state, value: value });
     }
-    setState({ ...state, value: arr });
   };
 
   const removeTag = (eachTag) => {
-    const updated = props.value.filter((item) => item !== eachTag);
-    setOption(updated);
+    let tagArr = [];
+    tagArr = props.value.filter((item) => item != eachTag);
+    setOption(tagArr);
   };
 
   const handleRemoveFilter = (ele) => {
-    let arr = value ? [...value] : [];
-    if (arr.includes(ele)) {
-      arr = arr.filter((item) => item !== ele);
+    let arr = [];
+    if (value?.includes(ele)) {
+      arr = value?.filter((item) => item != ele);
       setState({ ...state, value: arr });
+    } else {
+      value?.push(ele?.value);
+      setState({ ...state, value: value });
     }
   };
 
-  // ────────────────────────────────────────────────
-  // RENDER HELPERS
-  // ────────────────────────────────────────────────
+  const handlingCardNumber = (number) => {
+    let value = number
+      .replace(/\s?/g, "")
+      .replace(/(\d{4})/g, "$1 ")
+      .trim();
+    setValue(value);
+  };
 
-  const renderPhoneInput = () => (
-    <>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        {!hideVerify && (
-          <TouchableOpacity
+  const handlingCardExpiry = (date) => {
+    if (date.indexOf(".") >= 0 || date.length > 5) {
+      return;
+    }
+    if (date.length === 2 && value.length === 1) {
+      date += "/";
+    }
+    setValue(date);
+  };
+
+  return (
+    <View style={{ ...style }}>
+      {type === "phone" ? (
+        <View>
+          <View
             style={{
-              position: "absolute",
-              left: 10,
-              zIndex: 1,
               flexDirection: "row",
               alignItems: "center",
             }}
-            onPress={() => setCountryPickerVisible(true)}
           >
-            <Text style={{ fontSize: Sizes.m, marginRight: 4 }}>
-              {selectedCountry.dial_code}
-            </Text>
-          </TouchableOpacity>
-        )}
+            {!hideVerify && (
+              <>
+                {/* Replaced old CountryPicker with new one */}
+                <TouchableOpacity
+                  onPress={() => setShowCountryPicker(true)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingLeft: 10,
+                    position: "absolute",
+                    zIndex: 1,
+                  }}
+                >
+                  {selectedCountry?.flag && (
+                    <Text style={{ fontSize: 20, marginRight: 4 }}>
+                      {selectedCountry.flag}
+                    </Text>
+                  )}
+                  <Text style={{ fontSize: 16 }}>
+                    +{callingCode || selectedCountry?.dial_code || ""}
+                  </Text>
+                </TouchableOpacity>
 
-        <InputField
-          ref={ref}
-          {...props}
-          maxLength={13}
-          value={value}
-          keyboardType="numeric"
-          icon={hideVerify ? (icon ? icon : Images?.phonIcon) : null}
-          style={{ paddingLeft: hideVerify ? 15 : 80, zIndex: -1 }}
-        />
-
-        {!hideVerify && (
-          <>
-            {verified_status ? (
-              <Text
-                style={{
-                  color: Colors?.themeColor,
-                  position: "absolute",
-                  right: 10,
-                  fontWeight: "700",
-                }}
-              >
-                ✓ Verified
-              </Text>
-            ) : (
-              <TouchableOpacity
-                onPress={onVerify}
-                style={{
-                  ...Styles?.smallButton,
-                  position: "absolute",
-                  right: 10,
-                  backgroundColor: Colors?.themeColor,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: Colors?.white }}>Verify</Text>
-              </TouchableOpacity>
+                {/* Show the picker modal when button pressed */}
+                <CountryPicker
+                  show={showCountryPicker}
+                  pickerButtonOnPress={(item) => {
+                    setSelectedCountry(item);
+                    setCallingCode(item.dial_code.replace("+", "")); // remove + sign if needed
+                    setShowCountryPicker(false);
+                  }}
+                  // You can add more props like lang='en', popularCountries={['us', 'in']}, etc.
+                />
+              </>
             )}
-          </>
-        )}
-      </View>
 
-      <CountryCodesPicker
-        show={countryPickerVisible}
-        pickerButtonOnPress={handleCountrySelect}
-        onBackdropPress={() => setCountryPickerVisible(false)}
-      />
+            <InputField
+              ref={ref}
+              {...props}
+              maxLength={13}
+              value={`${value}`}
+              keyboardType={"numeric"}
+              icon={hideVerify ? (icon ? icon : Images?.phonIcon) : null}
+              style={{ paddingLeft: hideVerify ? 15 : 100, zIndex: -1 }}
+            />
 
-      {!isEmpty && (
-        <ErrorMessage
-          {...props}
-          message={
-            error
-              ? "Please enter valid phone number."
-              : isEmpty
-              ? "This field is required"
-              : null
-          }
-        />
-      )}
-    </>
-  );
-
-  const renderDatePicker = () => (
-    <>
-      <TouchableOpacity
-        onPress={() => !disable && setDatePickerVisible(true)}
-        style={{ width: "100%" }}
-      >
-        <InputField
-          {...props}
-          ref={ref}
-          editable={false}
-          value={
-            date
-              ? moment(date).format("MMM D, YYYY")
-              : placeholder || "Select date"
-          }
-          isEmpty={isEmpty}
-          fontIcon="calendar-month"
-          type={type}
-        />
-      </TouchableOpacity>
-
-      {datePickerVisible && (
-        <View
-          style={{
-            ...Styles.container,
-            marginHorizontal: 0,
-            width: "100%",
-            marginTop: 0,
-            padding: 5,
-          }}
-        >
-          <DateTimePicker
-            testID="dateTimePicker"
-            value={date}
-            mode="date"
-            is24Hour={true}
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            maximumDate={
-              maximum
-                ? new Date()
-                : dateType === "startDate" || dateType === "endDate"
-                ? null
-                : talentMinDate
-            }
-            minimumDate={
-              currentDateDisable
-                ? new Date()
-                : minimum
-                ? today
-                : dateType === "startDate"
-                ? new Date()
-                : dateType === "endDate"
-                ? startDate
-                : null
-            }
-            onChange={handleDateChange}
-            themeVariant="light"
-          />
-
-          {Platform.OS === "ios" && (
-            <TouchableOpacity
-              onPress={() => setDatePickerVisible(false)}
-              style={{
-                ...Styles?.smallButton,
-                backgroundColor: Colors?.themeColor,
-                marginVertical: 10,
-                alignSelf: "flex-end",
-                margin: 10,
-              }}
-            >
-              <TextComponent
-                text="Done"
-                color={Colors?.white}
-                size={Sizes?.s}
-                style={{ paddingHorizontal: 5 }}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-    </>
-  );
-
-  const renderTimePicker = () => (
-    <>
-      <TouchableOpacity
-        style={{ ...style }}
-        onPress={() => {
-          setTime(new Date());
-          setTimePickerVisible(true);
-        }}
-      >
-        <InputField
-          {...props}
-          style={{ ...style }}
-          ref={ref}
-          editable={false}
-          value={
-            time
-              ? customTime && !timePickerVisible
-                ? customTime
-                : moment(time).format("hh:mm a")
-              : null
-          }
-          type={type}
-        />
-      </TouchableOpacity>
-
-      {timePickerVisible && (
-        <View
-          style={
-            Platform.OS === "ios"
-              ? {
-                  ...Styles.container,
-                  marginHorizontal: 0,
-                  width: "100%",
-                  marginTop: 0,
-                  padding: 5,
-                }
-              : null
-          }
-        >
-          <DateTimePicker
-            value={time}
-            mode="time"
-            is24Hour={false}
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={handleTimeChange}
-            themeVariant="light"
-          />
-
-          {Platform.OS === "ios" && (
-            <TouchableOpacity
-              onPress={() => setTimePickerVisible(false)}
-              style={{
-                ...Styles?.smallButton,
-                backgroundColor: Colors?.themeColor,
-                marginVertical: 10,
-                alignSelf: "flex-end",
-                margin: 10,
-              }}
-            >
-              <TextComponent
-                text="Done"
-                color={Colors?.white}
-                size={Sizes?.s}
-                style={{ paddingHorizontal: 5 }}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-    </>
-  );
-
-  const renderMultiselect = () => (
-    <>
-      <TouchableOpacity
-        style={{ ...Styles?.flexRow }}
-        onPress={() => setModalVisible(!isModalVisible)}
-      >
-        <View
-          style={{
-            width: "100%",
-            borderWidth: isEmpty ? 1.5 : 0.5,
-            borderColor: isEmpty ? Colors?.red : Colors?.darkgrey,
-            paddingTop: 12,
-            borderRadius: 10,
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            marginBottom: 10,
-            justifyContent: "center",
-            alignContent: "center",
-          }}
-        >
-          {value?.length === 0 ? (
-            <View style={{ ...Styles?.row }}>
-              {fontIcon ? (
-                <MaterialCommunityIcons
-                  name={fontIcon}
-                  size={18}
-                  color={Colors.darkgrey}
-                  style={{ marginHorizontal: 4, bottom: 5 }}
-                />
-              ) : icon ? (
-                <Image
-                  source={icon}
-                  style={{ marginRight: 8, width: 17, height: 17, bottom: 5 }}
-                />
-              ) : null}
-              <TextComponent
-                color={Colors?.darkgrey}
-                text={placeholder}
-                size={Sizes?.s}
-                fontWeight="400"
-                style={{ marginBottom: 10, paddingHorizontal: 8 }}
-              />
-            </View>
-          ) : (
-            <View style={{ width: "92%", ...Styles?.row }}>
-              {fontIcon ? (
-                <MaterialCommunityIcons
-                  name={fontIcon}
-                  size={18}
-                  color={Colors.darkgrey}
-                  style={{ marginHorizontal: 4, bottom: 5 }}
-                />
-              ) : icon ? (
-                <Image
-                  source={icon}
-                  style={{ marginRight: 8, width: 17, height: 17, bottom: 5 }}
-                />
-              ) : null}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {value?.map((item, index) => (
-                  <View
-                    key={index}
+            {!hideVerify && (
+              <>
+                {verified_status ? (
+                  <Text
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      backgroundColor: Colors?.themeColor,
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 20,
-                      marginHorizontal: 5,
-                      marginBottom: 10,
+                      color: Colors?.themeColor,
+                      position: "absolute",
+                      right: 10,
+                      fontWeight: "700",
                     }}
                   >
-                    <TextComponent
-                      color={Colors?.white}
-                      text={
-                        item?.value ? item.value : item?.name ? item.name : item
-                      }
-                      size={Sizes?.xs}
-                    />
-                    <TouchableOpacity
-                      onPress={() =>
-                        filter ? handleRemoveFilter(item) : removeTag(item)
-                      }
-                    >
-                      <Entypo
-                        name="circle-with-cross"
-                        size={12}
-                        color={Colors.white}
-                        style={{ paddingLeft: 6 }}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
+                    {"✓ Verified"}
+                  </Text>
+                ) : (
+                  <TouchableOpacity
+                    onPress={onVerify}
+                    style={{
+                      ...Styles?.smallButton,
+                      position: "absolute",
+                      right: 10,
+                      backgroundColor: Colors?.themeColor,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text style={{ color: Colors?.white }}>{"Verify"}</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+          </View>
+
+          {!isEmpty && (
+            <ErrorMessage
+              {...props}
+              message={
+                error
+                  ? "Please enter valid phone number."
+                  : isEmpty
+                  ? requireMessage
+                  : null
+              }
+            />
           )}
         </View>
-
-        <TouchableOpacity onPress={() => setModalVisible(!isModalVisible)}>
-          <MaterialIcons
-            style={{
-              bottom: 4,
-              right: 55,
-              padding: 15,
-              alignSelf: "center",
-              marginLeft: 10,
-            }}
-            name="arrow-drop-down"
-            size={20}
+      ) : type === "text" ? (
+        <View>
+          <InputField
+            ref={ref}
+            {...props}
+            icon={icon}
+            fontIcon={fontIcon || "account"}
           />
-        </TouchableOpacity>
-      </TouchableOpacity>
-
-      <Modal
-        isVisible={isModalVisible}
-        style={{ position: "relative" }}
-        onBackdropPress={() => setModalVisible(false)}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalMainView}>
-          <TextComponent
-            text={placeholder}
-            size={Sizes?.l}
-            style={{ textAlign: "center", paddingBottom: 15 }}
-          />
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {options?.map((item, index) => (
-              <View key={index} style={{ padding: 8 }}>
-                <TouchableOpacity
-                  onPress={() => (filter ? handleCheckBox(item) : selectItem(item))}
-                  style={Styles?.flexRow}
-                >
-                  <TextComponent
-                    text={
-                      item.value ? item.value : item.name ? item.name : item
-                    }
-                    size={Sizes?.l}
-                    fontWeight="400"
-                  />
-                  {value?.length !== 0 ? (
-                    <MaterialIcons
-                      name={
-                        value?.some((v) =>
-                          typeof v === "object"
-                            ? v.id === item.id || v.value === item.value
-                            : v === (item.value || item.name)
-                        )
-                          ? "check-box"
-                          : "check-box-outline-blank"
-                      }
-                      size={20}
-                      color={
-                        value?.some((v) =>
-                          typeof v === "object"
-                            ? v.id === item.id || v.value === item.value
-                            : v === (item.value || item.name)
-                        )
-                          ? Colors?.themeColor
-                          : Colors?.darkgrey
-                      }
-                    />
-                  ) : (
-                    <MaterialIcons name="check-box-outline-blank" size={20} />
-                  )}
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
-
-          <Button
-            title="Done"
-            background={true}
-            onPress={() => setModalVisible(false)}
-          />
-
-          <TouchableOpacity
-            onPress={() => setModalVisible(false)}
-            style={{
-              position: "absolute",
-              top: -10,
-              right: -10,
-              backgroundColor: Colors?.white,
-              borderRadius: 100,
-            }}
-          >
-            <Entypo name="circle-with-cross" size={35} color={Colors.red} />
-          </TouchableOpacity>
+          {!isEmpty && (
+            <ErrorMessage
+              {...props}
+              message={
+                error
+                  ? "Please enter valid input."
+                  : isEmpty
+                  ? requireMessage
+                  : null
+              }
+            />
+          )}
         </View>
-      </Modal>
-    </>
-  );
-
-  // ────────────────────────────────────────────────
-  // MAIN RETURN
-  // ────────────────────────────────────────────────
-
-  return (
-    <View style={style}>
-      {type === "phone" ? (
-        renderPhoneInput()
-      ) : type === "datePicker" ? (
-        renderDatePicker()
-      ) : type === "timePicker" ? (
-        renderTimePicker()
-      ) : type === "multiselect" ? (
-        renderMultiselect()
-      ) : type === "password" ? (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+      ) : type === "numeric" ? (
+        <View>
           <InputField
             {...props}
             ref={ref}
-            secureTextEntry={isVisible}
-            icon={icon ? icon : Images?.passwordLock}
+            type={type}
+            icon={icon}
             fontIcon={fontIcon}
           />
+          {!isEmpty && (
+            <ErrorMessage
+              {...props}
+              message={
+                error
+                  ? "Please enter valid input."
+                  : isEmpty
+                  ? requireMessage
+                  : null
+              }
+            />
+          )}
+        </View>
+      ) : type === "email" ? (
+        <View>
+          <InputField
+            {...props}
+            ref={ref}
+            autoCapitalize="none"
+            icon={icon ? icon : Images?.emailIcon}
+            fontIcon={fontIcon}
+          />
+          {!isEmpty && (
+            <ErrorMessage
+              {...props}
+              message={
+                error
+                  ? "Please enter valid email."
+                  : isEmpty
+                  ? requireMessage
+                  : null
+              }
+            />
+          )}
+        </View>
+      ) : type === "password" ? (
+        <View>
+          <View style={{ flexDirection: "row" }}>
+            <View style={{ width: "100%" }}>
+              <InputField
+                {...props}
+                ref={ref}
+                secureTextEntry={isVisible}
+                icon={icon ? icon : null}
+                fontIcon={fontIcon}
+              />
+            </View>
+
+            <View style={{ justifyContent: "center", right: 15 }}>
+              <TouchableOpacity
+                onPress={() => setIsVisible(!isVisible)}
+                style={{
+                  position: "absolute",
+                  right: 2,
+                }}
+              >
+                <Ionicons
+                  name={!isVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color={Colors?.black}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          {!isEmpty && (
+            <ErrorMessage
+              {...props}
+              type="password"
+              message={
+                error
+                  ? `The password must contain at least 8 character categories: Uppercase characters (A-Z), Lowercase characters (a-z), Digits (0-9), special characters`
+                  : isEmpty
+                  ? requireMessage
+                  : null
+              }
+            />
+          )}
+        </View>
+      ) : type === "confirmPassword" ? (
+        <View>
+          <View style={{ flexDirection: "row" }}>
+            <View style={{ width: "100%" }}>
+              <InputField
+                {...props}
+                ref={ref}
+                secureTextEntry={isVisible}
+                icon={icon ? icon : Images?.passwordLock}
+                fontIcon={fontIcon}
+              />
+            </View>
+            {icon ? (
+              <View
+                style={{ justifyContent: "center", backgroundColor: "red" }}
+              >
+                <TouchableOpacity
+                  onPress={() => setIsVisible(!isVisible)}
+                  style={{
+                    position: "absolute",
+                    right: 1,
+                  }}
+                >
+                  <Ionicons
+                    name={!isVisible ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
+          {!isEmpty && (
+            <ErrorMessage {...props} message={"Both password should match."} />
+          )}
+        </View>
+      ) : type === "dropdown" ? (
+        <InputField
+          {...props}
+          ref={ref}
+          type="dropdown"
+          icon={icon}
+          open={open}
+          setOpen={setOpen}
+          selectedItem={selectedItem}
+          setSelectedItem={setSelectedItem}
+          onChangeText={onChangeText}
+          options={options}
+          fontIcon={fontIcon}
+        />
+      ) : type === "datePicker" ? (
+        <>
+          <View>
+            <TouchableOpacity
+              onPress={() => handleDatePicker()}
+              style={{ width: "100%" }}
+            >
+              <InputField
+                {...props}
+                ref={ref}
+                editable={false}
+                value={
+                  date
+                    ? currentDate
+                      ? moment(new Date(date)).format("MMM D YYYY")
+                      : new Date(date)?.toDateString() ==
+                        newDate?.toDateString()
+                      ? ""
+                      : new Date(date)?.toDateString()?.slice(4)
+                    : null
+                }
+                isEmpty={isEmpty}
+                fontIcon="calendar-month"
+                type={type}
+              />
+            </TouchableOpacity>
+          </View>
+          {datePicker ? (
+            <View
+              style={{
+                ...Styles.container,
+                marginHorizontal: 0,
+                width: "100%",
+                marginTop: 0,
+                padding: 5,
+              }}
+            >
+              <DateTimePicker
+                testID="dateTimePicker"
+                maximumDate={
+                  maximum
+                    ? new Date()
+                    : dateType == "startDate"
+                    ? null
+                    : dateType == "endDate"
+                    ? null
+                    : new Date(talentMinDate)
+                }
+                minimumDate={
+                  currentDateDisable
+                    ? new Date()
+                    : minimum
+                    ? new Date(minDate)
+                    : dateType == "startDate"
+                    ? new Date()
+                    : dateType == "endDate"
+                    ? new Date(startDate)
+                    : null
+                }
+                value={Platform?.OS == "ios" ? date : new Date(date)}
+                date={new Date()}
+                mode={"date"}
+                is24Hour={true}
+                onChange={onDateSelected}
+                themeVariant={"light"}
+                display={Platform.OS === "ios" ? "spinner" : "spinner"}
+              />
+              {Platform.OS === "ios" && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setDatePicker(!datePicker);
+                  }}
+                  style={{
+                    ...Styles?.smallButton,
+                    backgroundColor: Colors?.themeColor,
+                    marginVertical: 0,
+                    alignSelf: "flex-end",
+                    margin: 10,
+                  }}
+                >
+                  <TextComponent
+                    text="Done"
+                    color={Colors?.white}
+                    size={Sizes?.s}
+                    style={{ paddingHorizontal: 5 }}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : null}
+        </>
+      ) : type == "timePicker" ? (
+        <>
           <TouchableOpacity
-            onPress={togglePasswordVisibility}
-            style={{ position: "absolute", right: 15 }}
+            style={{ ...style }}
+            onPress={() => {
+              setTime(newDate);
+              setDatePicker(true);
+            }}
           >
-            <Ionicons
-              name={isVisible ? "eye-off" : "eye"}
-              size={20}
-              color={Colors?.black}
+            <InputField
+              {...props}
+              style={{ ...style }}
+              ref={ref}
+              editable={false}
+              value={
+                showDate || datePicked
+                  ? customTime && customTimer
+                    ? customTime
+                    : moment(new Date(time)).format("hh:mm a")
+                  : null
+              }
+              type={type}
             />
           </TouchableOpacity>
-        </View>
-      ) : type === "cardNumber" ? (
-        <InputField
-          {...props}
-          ref={ref}
-          maxLength={19}
-          keyboardType="numeric"
-          icon={icon ? icon : Images?.phonIcon}
-          fontIcon="credit-card"
-          onChangeText={handlingCardNumber}
-        />
-      ) : type === "expiryDate" ? (
-        <InputField
-          {...props}
-          ref={ref}
-          maxLength={5}
-          keyboardType="numeric"
-          fontIcon="credit-card-clock"
-          onChangeText={handlingCardExpiry}
-        />
-      ) : type === "cvc" ? (
-        <InputField
-          {...props}
-          ref={ref}
-          maxLength={3}
-          keyboardType="numeric"
-          fontIcon="code-equal"
-        />
-      ) : (
-        <InputField
-          {...props}
-          ref={ref}
-          icon={icon}
-          fontIcon={fontIcon}
-          onChangeText={onChangeText}
-        />
-      )}
-
-      {!isEmpty && type !== "phone" && type !== "multiselect" && (
-        <ErrorMessage
-          {...props}
-          message={
-            error
-              ? `Please enter valid ${type}.`
-              : isEmpty
-              ? "This field is required"
-              : null
+          {datePicker && (
+            <View
+              style={
+                Platform.OS === "ios"
+                  ? {
+                      ...Styles.container,
+                      marginHorizontal: 0,
+                      width: "100%",
+                      marginTop: 0,
+                      padding: 5,
+                    }
+                  : null
+              }
+            >
+              {Platform?.OS == "ios" ? (
+                <DateTimePicker
+                  value={time}
+                  mode={"time"}
+                  date={newDate}
+                  is24Hour={false}
+                  onChange={onTimeSelected}
+                  display={Platform.OS === "ios" ? "spinner" : "spinner"}
+                  themeVariant={"light"}
+                />
+              ) : (
+                <DateTimePicker
+                  value={new Date(time)}
+                  mode={"time"}
+                  date={newDate}
+                  is24Hour={false}
+                  onChange={onTimeSelected}
+                  display={Platform.OS === "ios" ? "spinner" : "spinner"}
+                />
+              )}
+              {Platform.OS === "ios" && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setDatePicker(!datePicker);
+                  }}
+                  style={{
+                    ...Styles?.smallButton,
+                    backgroundColor: Colors?.themeColor,
+                    marginVertical: 0,
+                    alignSelf: "flex-end",
+                    margin: 10,
+                  }}
+                >
+                  <TextComponent
+                    text="Done"
+                    color={Colors?.white}
+                    size={Sizes?.s}
+                    style={{ paddingHorizontal: 5 }}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </>
+      ) : type == "description" ? (
+        <TouchableOpacity
+          onPress={() =>
+            inputRef.current.focus ? inputRef.current.focus() : ""
           }
-        />
-      )}
+          style={{
+            ...style,
+            borderWidth: isEmpty ? 1.5 : 0.5,
+            borderRadius: 18,
+            borderColor: isEmpty ? Colors?.red : Colors?.darkgrey,
+            paddingHorizontal: 10,
+            marginHorizontal: 4,
+            alignItems: "flex-start",
+            height: 100,
+            paddingTop: Platform.OS == "android" ? 0 : 8,
+          }}
+        >
+          <TextInput
+            {...props}
+            ref={inputRef}
+            onChangeText={onChangeText}
+            value={value}
+            multiline={true}
+            placeholder={placeholder}
+            autoCapitalize="sentences"
+            autoFocus={autoFocus}
+            style={{
+              width: "100%",
+            }}
+          />
+        </TouchableOpacity>
+      ) : type == "multiselect" ? (
+        <>
+          <TouchableOpacity
+            style={{ ...Styles?.flexRow }}
+            onPress={() => setModalVisible(!isModalVisible)}
+          >
+            <View
+              style={{
+                width: "100%",
+                borderWidth: isEmpty ? 1.5 : 0.5,
+                borderColor: isEmpty ? Colors?.red : Colors?.darkgrey,
+                paddingTop: 12,
+                borderRadius: 10,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                marginBottom: 10,
+                justifyContent: "center",
+                alignContent: "center",
+              }}
+            >
+              {value?.length == 0 ? (
+                <View style={{ ...Styles?.row }}>
+                  {fontIcon ? (
+                    <MaterialCommunityIcons
+                      name={fontIcon}
+                      size={18}
+                      color={Colors.darkgrey}
+                      style={{
+                        marginHorizontal: 4,
+                        bottom: 5,
+                      }}
+                    />
+                  ) : icon ? (
+                    <Image
+                      source={icon}
+                      style={{
+                        marginRight: 8,
+                        width: 17,
+                        height: 17,
+                        bottom: 5,
+                      }}
+                    />
+                  ) : null}
+                  <TextComponent
+                    color={Colors?.darkgrey}
+                    text={placeholder}
+                    size={Sizes?.s}
+                    fontWeight="400"
+                    style={{ marginBottom: 10, paddingHorizontal: 8 }}
+                  />
+                </View>
+              ) : (
+                <View style={{ width: "92%", ...Styles?.row }}>
+                  {fontIcon ? (
+                    <MaterialCommunityIcons
+                      name={fontIcon}
+                      size={18}
+                      color={Colors.darkgrey}
+                      style={{
+                        marginHorizontal: 4,
+                        bottom: 5,
+                      }}
+                    />
+                  ) : icon ? (
+                    <Image
+                      source={icon}
+                      style={{
+                        marginRight: 8,
+                        width: 17,
+                        height: 17,
+                        bottom: 5,
+                      }}
+                    />
+                  ) : null}
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {value?.length != 0 &&
+                      value?.map((item, index) => {
+                        return (
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              backgroundColor: Colors?.themeColor,
+                              paddingHorizontal: 10,
+                              paddingVertical: 5,
+                              borderRadius: 20,
+                              marginHorizontal: 5,
+                              marginBottom: 10,
+                            }}
+                            key={index}
+                          >
+                            <TextComponent
+                              color={Colors?.white}
+                              text={
+                                item?.value
+                                  ? item?.value
+                                  : item?.name
+                                  ? item?.name
+                                  : item
+                              }
+                              size={Sizes?.xs}
+                            />
+                            <TouchableOpacity
+                              onPress={() =>
+                                filter
+                                  ? handleRemoveFilter(item)
+                                  : removeTag(item)
+                              }
+                            >
+                              <Entypo
+                                name="circle-with-cross"
+                                size={12}
+                                color={Colors.white}
+                                style={{ paddingLeft: 6 }}
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={() => setModalVisible(!isModalVisible)}
+              style={{}}
+            >
+              <MaterialIcons
+                style={{
+                  bottom: 4,
+                  right: 55,
+                  padding: 15,
+                  alignSelf: "center",
+                  marginLeft: 10,
+                }}
+                name="arrow-drop-down"
+                size={20}
+              />
+            </TouchableOpacity>
+          </TouchableOpacity>
+
+          <Modal
+            isVisible={isModalVisible}
+            style={{ position: "relative" }}
+            onBackdropPress={() => setModalVisible(false)}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalMainView}>
+              <TextComponent
+                text={placeholder}
+                size={Sizes?.l}
+                style={{ textAlign: "center", paddingBottom: 15 }}
+              />
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {options?.map((item, index) => {
+                  return (
+                    <View key={index} style={{ padding: 8 }}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          filter ? handleCheckBox(item) : selectItem(item)
+                        }
+                        style={Styles?.flexRow}
+                      >
+                        <TextComponent
+                          text={
+                            item.value
+                              ? item.value
+                              : item.name
+                              ? item.name
+                              : item
+                          }
+                          size={Sizes?.l}
+                          fontWeight="400"
+                        />
+                        {value?.length != 0 ? (
+                          placeholder == "Select Language" ? (
+                            <MaterialIcons
+                              name={
+                                filter
+                                  ? value?.length != 0
+                                    ? value?.includes(item?.name)
+                                      ? "check-box"
+                                      : "check-box-outline-blank"
+                                    : "check-box-outline-blank"
+                                  : value?.some((obj) => obj.id == item.id)
+                                  ? "check-box"
+                                  : "check-box-outline-blank"
+                              }
+                              size={20}
+                              color={
+                                filter
+                                  ? value?.length != 0
+                                    ? value?.includes(item?.name)
+                                      ? Colors?.themeColor
+                                      : Colors?.darkgrey
+                                    : Colors?.darkgrey
+                                  : value?.some((obj) => obj.id == item.id)
+                                  ? Colors?.themeColor
+                                  : Colors?.darkgrey
+                              }
+                            />
+                          ) : (
+                            <MaterialIcons
+                              name={
+                                filter
+                                  ? value?.length != 0
+                                    ? value?.includes(item?.value) ||
+                                      value?.includes(item?.name)
+                                      ? "check-box"
+                                      : "check-box-outline-blank"
+                                    : "check-box-outline-blank"
+                                  : value?.some(
+                                      (obj) => obj.value == item.value,
+                                    )
+                                  ? "check-box"
+                                  : "check-box-outline-blank"
+                              }
+                              size={20}
+                              color={
+                                filter
+                                  ? value?.length != 0
+                                    ? value?.includes(item?.value) ||
+                                      value?.includes(item?.name)
+                                      ? Colors?.themeColor
+                                      : Colors?.darkgrey
+                                    : Colors?.darkgrey
+                                  : value?.some(
+                                      (obj) => obj.value == item.value,
+                                    )
+                                  ? Colors?.themeColor
+                                  : Colors?.darkgrey
+                              }
+                            />
+                          )
+                        ) : (
+                          <MaterialIcons
+                            name={"check-box-outline-blank"}
+                            size={20}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+              <Button
+                title="Done"
+                background={true}
+                onPress={() => setModalVisible(false)}
+              />
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={{
+                  position: "absolute",
+                  top: -10,
+                  right: -10,
+                  backgroundColor: Colors?.white,
+                  borderRadius: 100,
+                }}
+              >
+                <Entypo name="circle-with-cross" size={35} color={Colors.red} />
+              </TouchableOpacity>
+            </View>
+          </Modal>
+        </>
+      ) : type === "cardNumber" ? (
+        <View style={{ ...style }}>
+          <InputField
+            {...props}
+            ref={ref}
+            maxLength={19}
+            keyboardType={"numeric"}
+            icon={icon ? icon : Images?.phonIcon}
+            fontIcon={"credit-card"}
+            onChangeText={(val) => handlingCardNumber(val)}
+          />
+          <ErrorMessage
+            {...props}
+            message={
+              error
+                ? "Please enter valid Card Number."
+                : isEmpty
+                ? requireMessage
+                : null
+            }
+          />
+        </View>
+      ) : type === "expiryDate" ? (
+        <View style={{ ...style }}>
+          <InputField
+            {...props}
+            ref={ref}
+            maxLength={5}
+            keyboardType={"numeric"}
+            fontIcon={"credit-card-clock"}
+            onChangeText={(val) => handlingCardExpiry(val)}
+          />
+          <ErrorMessage
+            {...props}
+            message={
+              error
+                ? "Please enter valid Expiry Date."
+                : isEmpty
+                ? requireMessage
+                : null
+            }
+          />
+        </View>
+      ) : type === "cvc" ? (
+        <View style={{ ...style }}>
+          <InputField
+            {...props}
+            ref={ref}
+            maxLength={3}
+            keyboardType={"numeric"}
+            fontIcon={"code-equal"}
+          />
+          <ErrorMessage
+            {...props}
+            message={
+              error
+                ? "Please enter valid Expiry Date."
+                : isEmpty
+                ? requireMessage
+                : null
+            }
+          />
+        </View>
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  inputContainer: {
+    padding: Sizes.xxs,
+  },
+  inputBox: {
+    borderWidth: 0,
+  },
   modalMainView: {
     backgroundColor: "white",
     padding: 30,
     borderRadius: 15,
     maxHeight: 400,
     position: "relative",
+  },
+  modalItemTouch: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 });

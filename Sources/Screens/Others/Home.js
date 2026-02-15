@@ -302,7 +302,7 @@ export const Home = ({ route, navigation }) => {
       console.log("getSocialPostsgetSocialPosts-----", res);
 
       // let data = res?.results?.data;
-      let data = res?.results;
+      let data = res?.results.reverse();
       let arr = data?.filter(
         (item) => item?.extra?.hide_profile_status == false,
       );
@@ -520,8 +520,8 @@ export const Home = ({ route, navigation }) => {
             </View>
           </>
         )}
-        onEndReachedThreshold={0.5}
-        onEndReached={endReached}
+        // onEndReachedThreshold={0.5}
+        // onEndReached={endReached}
         ListFooterComponent={ListFooterComponent}
       />
     </KeyboardAvoidingView>

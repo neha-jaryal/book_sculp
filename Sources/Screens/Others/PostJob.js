@@ -309,7 +309,7 @@ export const PostJob = ({ navigation }) => {
   const removeImage = (eachImage) => {
     let imageArr = [];
     imageArr = jobDetails?.projectFiles?.filter(
-      (item) => item.uri != eachImage.uri
+      (item) => item.uri != eachImage.uri,
     );
     setJobDetails({ ...jobDetails, projectFiles: imageArr });
   };
@@ -408,7 +408,7 @@ export const PostJob = ({ navigation }) => {
                   navigation?.navigate(routeName?.IDENTITY_VERIFICATION);
                 },
               },
-            ]
+            ],
           );
         } else {
           handleValidation();
@@ -680,7 +680,7 @@ export const PostJob = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, paddingBottom: 100 }}
       enabled={true}
       behavior={Platform?.OS == "ios" ? "padding" : null}
     >
@@ -688,7 +688,7 @@ export const PostJob = ({ navigation }) => {
       <Loader loading={other?.isLoading ? other?.isLoading : auth?.isLoading} />
 
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1,  }}
         showsVerticalScrollIndicator={false}
         nestedscrollenabled={true}
       >
@@ -2199,7 +2199,7 @@ export const PostJob = ({ navigation }) => {
           // onPress={() => handlePostJob()}
           style={{ paddingVertical: 5 }}
         />
-        <View style={{ height: 30 }} />
+        <View style={{ height: 50 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

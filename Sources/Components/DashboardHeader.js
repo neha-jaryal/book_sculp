@@ -22,7 +22,7 @@ import { GET_CHAT_BADGE, GET_NOTIFICATION_BADGE } from "../API Services/Url";
 import { getAccountApproval } from "../Utility";
 import { db } from "../Utility/Firebase"; // your default firestore instance
 import { AuthContext } from "../Context/AuthContext";
-import notifee from '@notifee/react-native';
+import notifee from "@notifee/react-native";
 
 export const DashboardHeader = (props) => {
   const navigation = useNavigation();
@@ -42,7 +42,7 @@ export const DashboardHeader = (props) => {
   useFocusEffect(
     React.useCallback(() => {
       getUserData();
-    }, [])
+    }, []),
   );
 
   const getAccountApprovalStatus = async () => {
@@ -63,7 +63,7 @@ export const DashboardHeader = (props) => {
       if (res.status == 200) {
         setUserData(res.results);
         let response = await dispatch(
-          getNotificationBadge(body, GET_NOTIFICATION_BADGE)
+          getNotificationBadge(body, GET_NOTIFICATION_BADGE),
         );
         getAccountApprovalStatus();
         if (response?.status == 200) {
@@ -87,7 +87,7 @@ export const DashboardHeader = (props) => {
       user_id: userID,
     };
     let res = await dispatch(
-      getNotificationBadge(body, GET_NOTIFICATION_BADGE)
+      getNotificationBadge(body, GET_NOTIFICATION_BADGE),
     );
     if (res?.status == 200) {
       props?.navigation?.navigate(routeName?.NOTIFICATIONS);
@@ -101,31 +101,39 @@ export const DashboardHeader = (props) => {
     }
   }, [currentUser?.uid]);
 
-  const getChats = () => {
-    const unsub = db
-      .collection("userChats")
-      .doc(currentUser.uid)
-      .onSnapshot(
-        (docSnapshot) => {
-          const chatData = docSnapshot.data();
-          if (chatData) {
-            let counts = 0;
-            Object.entries(chatData).forEach(([chatId, chat]) => {
-              counts += chat?.unreadCount || 0;
-            });
-            setChatCount(counts);
-          } else {
-            setChatCount(0);
-          }
-        },
-        (error) => {
-          console.error("Firestore chat listener error:", error);
-          setChatCount(0); // optional fallback
-        }
-      );
+const getChats = () => {
+  if (!currentUser?.uid) {
+    setChatCount(0);
+    return () => {};
+  }
 
-    return () => unsub();
-  };
+  const unsubscribe = db
+    .collection("userChats")
+    .doc(currentUser.uid)
+    .onSnapshot(
+      (docSnapshot) => {
+        if (docSnapshot.exists) {
+          const chatData = docSnapshot.data() || {};
+          let total = 0;
+
+          Object.values(chatData).forEach((chat) => {
+            total += chat?.unreadCount || 0;
+          });
+
+          setChatCount(total);
+        } else {
+          setChatCount(0);
+        }
+      },
+      (error) => {
+        console.error("Firestore chat listener error:", error);
+        setChatCount(0);
+      }
+    );
+
+  return unsubscribe;
+};
+
 
   return (
     <View style={Styles?.dashboardHeader}>

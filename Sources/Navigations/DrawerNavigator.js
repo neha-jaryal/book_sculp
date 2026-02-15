@@ -173,6 +173,11 @@ const DrawerNavigator = () => {
           component={otherScreens?.PayoutSetting}
           options={{ headerShown: false }}
         />
+         <Drawer.Screen
+          name={routeName?.PAYOUT_HISTORY}
+          component={otherScreens?.PayoutHistory}
+          options={{ headerShown: false }}
+        />
         <Drawer.Screen
           name={routeName?.CASTING_CALLS}
           component={otherScreens?.CastingCalls}
@@ -268,7 +273,7 @@ const DrawerNavigator = () => {
           component={otherScreens?.AddPortfolio}
           options={{ headerShown: false }}
         />
-        
+
         <Drawer.Screen
           name={routeName.ADD_POST}
           component={otherScreens?.AddPost}

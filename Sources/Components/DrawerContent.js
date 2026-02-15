@@ -48,17 +48,17 @@ export const CustomDrawerContent = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       getUserData();
-    }, [approvalStatus])
+    }, [approvalStatus]),
   );
   useFocusEffect(
     React.useCallback(() => {
       getAccountApprovalStatus();
-    }, [userRole, drawerItem])
+    }, [userRole, drawerItem]),
   );
   useFocusEffect(
     React.useCallback(() => {
       getUserRole();
-    }, [userData])
+    }, [userData]),
   );
   const getAccountApprovalStatus = async () => {
     let status = await getData(storageKey?.APPROVAL_STATUS);
@@ -336,7 +336,7 @@ export const CustomDrawerContent = ({ navigation }) => {
       userLogout({
         user_id: userId,
         device_token: JSON?.parse(fcmToken),
-      })
+      }),
     );
     dispatch(navigatorStatus(routeName?.AUTHSTACKS, false, ""));
 
@@ -354,7 +354,7 @@ export const CustomDrawerContent = ({ navigation }) => {
       [
         { text: "No", style: "cancel" },
         { text: "Yes", onPress: () => logout() },
-      ]
+      ],
     );
   };
 
@@ -440,7 +440,7 @@ export const CustomDrawerContent = ({ navigation }) => {
               {!data?.hide && (
                 <>
                   <TouchableOpacity
-                   key={data.id || index.toString()}
+                    key={data.id || index.toString()}
                     onPress={() => {
                       data?.innerList
                         ? setShowItems(!showItems)
@@ -481,7 +481,7 @@ export const CustomDrawerContent = ({ navigation }) => {
                           return (
                             <>
                               <TouchableOpacity
-                               key={item.id || index.toString()}
+                                key={item.id || index.toString()}
                                 onPress={() => {
                                   goToScreen(item.path, item);
                                 }}

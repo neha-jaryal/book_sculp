@@ -116,7 +116,7 @@ export const DropDownList = (props) => {
             : border
             ? Colors?.darkgrey
             : Colors?.darkgrey,
-          paddingHorizontal: 20,
+          paddingHorizontal: icon ? 20 : fontIcon ? 20 : 6,
           paddingVertical: 14,
           position: "relative",
           flexDirection: "row",

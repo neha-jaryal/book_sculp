@@ -304,6 +304,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>RNCClipboard.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>RNCMaskedView.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -944,12 +949,22 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>react-native-keyboard-controller.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>react-native-netinfo.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
 		</dict>
 		<key>react-native-safe-area-context.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>react-native-splash-screen.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>

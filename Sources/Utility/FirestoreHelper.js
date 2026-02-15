@@ -6,7 +6,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-} from "firebase/firestore";
+} from "@react-native-firebase/firestore"; // ← modular import
 import { routeName } from "./routeName";
 import { adminAuth, db, firebaseAuth } from "./Firebase";
 import {
@@ -14,9 +14,10 @@ import {
   signInWithCustomToken,
   signInWithEmailAndPassword,
   updateProfile,
-} from "firebase/auth";
+  signOut,
+  getAuth,
+} from "@react-native-firebase/auth"; // ← modular import
 import { useDispatch } from "react-redux";
-import { signOut } from "firebase/auth";
 import { FIREBASE_KEY } from ".";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -27,11 +28,8 @@ import { getData, storageKey } from "./Storage";
 
 export const handleFirebaseLogin = async (email) => {
   try {
-    let res = await signInWithEmailAndPassword(
-      firebaseAuth,
-      email,
-      FIREBASE_KEY
-    );
+    const authInstance = getAuth();
+    let res = await signInWithEmailAndPassword(authInstance, email, FIREBASE_KEY);
     console.log("handleFirebaseLogin resresresres-----", res);
   } catch (err) {
     console.log("handleFirebaseLogin error", err);
@@ -51,11 +49,14 @@ export const useHandleMessage = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
+  const authInstance = getAuth();     // modular auth
+  const firestore = db;               // already modular from your import
+
   const updateUserStatus = async (userId, status) => {
     if (userId) {
       try {
         await setDoc(
-          doc(db, "userStatus", userId),
+          doc(firestore, "userStatus", userId),
           { status },
           { merge: true }
         );
@@ -76,14 +77,11 @@ export const useHandleMessage = () => {
   ) => {
     try {
       setLoading(true);
+
       try {
-        await signInWithEmailAndPassword(
-          firebaseAuth,
-          currentUser?.email,
-          password
-        );
+        await signInWithEmailAndPassword(authInstance, currentUser?.email, password);
       } catch (error) {
-        console.log("erroro---", error);
+        console.log("Sign-in error:", error);
       }
 
       await createChatCollection(
@@ -95,6 +93,7 @@ export const useHandleMessage = () => {
         id
       );
     } catch (err) {
+      console.error("Login handling error:", err);
       setLoading(false);
     }
   };
@@ -102,6 +101,7 @@ export const useHandleMessage = () => {
   const getUserByEmail = async (email) => {
     const userData = await getFirebaseUser(email);
     if (userData) return userData;
+    return null;
   };
 
   const handleFirebaseRegister = async (
@@ -118,9 +118,9 @@ export const useHandleMessage = () => {
     try {
       const cleanEmail = email.trim().toLowerCase();
       const userDetails = await getUserByEmail(cleanEmail);
-      const providerIds = userDetails?.user?.providerData.map(
+      const providerIds = userDetails?.user?.providerData?.map(
         (p) => p?.providerId
-      );
+      ) || [];
 
       const hasGoogle = providerIds.includes("google.com");
       const hasApple = providerIds.includes("apple.com");
@@ -136,7 +136,7 @@ export const useHandleMessage = () => {
       } else if (hasPassword) {
         try {
           const res = await createUserWithEmailAndPassword(
-            firebaseAuth,
+            authInstance,
             cleanEmail,
             password
           );
@@ -146,7 +146,7 @@ export const useHandleMessage = () => {
           if (err.code === "auth/email-already-in-use") {
             console.log("⚠️ Email already exists, logging in instead...");
             const userCredential = await signInWithEmailAndPassword(
-              adminAuth,
+              authInstance,
               cleanEmail,
               password
             );
@@ -160,61 +160,71 @@ export const useHandleMessage = () => {
       } else {
         console.log(
           "User already registered via provider:",
-          userDetails.providerUserInfo[0]?.providerId
+          userDetails?.providerUserInfo?.[0]?.providerId
         );
         return null;
       }
 
       const userData = {
         user_email: email,
-        displayName: displayName || userData?.display_name,
+        displayName: displayName || userDetails?.display_name,
         profile_image: photoURL,
         user_id: id,
         user_role: user_type,
       };
-      handleFirebaseTable(nextUser, userData, setLoading);
+
+      await handleFirebaseTable(nextUser, userData, setLoading);
     } catch (err) {
+      console.error("Register error:", err);
       setLoading(false);
     }
   };
 
   const handleFirebaseTable = async (nextUser, userData, setLoading) => {
     setLoading(true);
-    await updateProfile(nextUser, {
-      displayName: userData?.displayName,
-      photoURL: userData?.profile_image || "",
-      user_id: userData?.user_id,
-      user_type: userData?.user_role,
-    });
-    console.log("✅ Updated Profile successfully !");
-    await setDoc(doc(db, "users", nextUser.uid), {
-      uid: nextUser.uid,
-      displayName: userData?.displayName,
-      email: userData?.user_email,
-      photoURL: userData?.profile_image,
-      user_id: userData?.user_id,
-    });
-    await setDoc(doc(db, "userChats", nextUser.uid), {});
-    const body = {
-      user_id: userData.id || userData?.user_id,
-      chat_udi: nextUser.uid,
-    };
-    const response = await dispatch(addFirebaseUid(body));
-    if (response?.status === 200) {
-      await updateUserStatus(nextUser.uid, "offline");
-      await signOut(adminAuth);
-      // await createChatCollection(email, res.user.uid, displayName, setLoading, photoURL);
-      await handleFirebaseLogin(
-        FIREBASE_KEY,
-        userData?.user_email,
-        nextUser.uid,
-        userData?.displayName,
-        setLoading,
-        userData?.profile_image,
-        userData?.user_id
-      );
+    try {
+      await updateProfile(nextUser, {
+        displayName: userData?.displayName,
+        photoURL: userData?.profile_image || "",
+      });
+
+      console.log("✅ Updated Profile successfully !");
+
+      await setDoc(doc(firestore, "users", nextUser.uid), {
+        uid: nextUser.uid,
+        displayName: userData?.displayName,
+        email: userData?.user_email,
+        photoURL: userData?.profile_image,
+        user_id: userData?.user_id,
+      });
+
+      await setDoc(doc(firestore, "userChats", nextUser.uid), {});
+
+      const body = {
+        user_id: userData.id || userData?.user_id,
+        chat_udi: nextUser.uid,
+      };
+
+      const response = await dispatch(addFirebaseUid(body));
+      if (response?.status === 200) {
+        await updateUserStatus(nextUser.uid, "offline");
+        await signOut(adminAuth);
+
+        await handleFirebaseLogin(
+          FIREBASE_KEY,
+          userData?.user_email,
+          nextUser.uid,
+          userData?.displayName,
+          setLoading,
+          userData?.profile_image,
+          userData?.user_id
+        );
+      }
+    } catch (err) {
+      console.error("Firebase table error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const createChatCollection = async (
@@ -229,85 +239,78 @@ export const useHandleMessage = () => {
     const combinedId =
       currentUser.uid > uid ? currentUser.uid + uid : uid + currentUser.uid;
     const user_id = await getData(storageKey?.USER_ID);
+
     try {
-      const res = await getDoc(doc(db, "chats", combinedId));
+      const chatRef = doc(firestore, "chats", combinedId);
+      const chatSnap = await getDoc(chatRef);
 
-      if (!res.exists()) {
-        // Create a chat in the chats collection
-        await setDoc(doc(db, "chats", combinedId), { messages: [] });
+      if (!chatSnap.exists()) {
+        // Create chat
+        await setDoc(chatRef, { messages: [] });
 
-        // Create user chats
-        await updateDoc(doc(db, "userChats", currentUser.uid), {
-          [combinedId + ".userInfo"]: {
-            uid: uid,
-            displayName: displayName,
-            email: email,
-            photoURL: photoURL,
+        // Update both users' chat lists
+        await updateDoc(doc(firestore, "userChats", currentUser.uid), {
+          [`${combinedId}.userInfo`]: {
+            uid,
+            displayName,
+            email,
+            photoURL,
             user_id: id,
           },
-          [combinedId + ".date"]: serverTimestamp(),
+          [`${combinedId}.date`]: serverTimestamp(),
         });
 
-        await updateDoc(doc(db, "userChats", uid), {
-          [combinedId + ".userInfo"]: {
+        await updateDoc(doc(firestore, "userChats", uid), {
+          [`${combinedId}.userInfo`]: {
             uid: currentUser.uid,
             displayName: currentUser.displayName,
             email: currentUser.email,
             photoURL: currentUser.photoURL,
-            user_id: user_id,
+            user_id,
           },
-          [combinedId + ".date"]: serverTimestamp(),
-        });
-        setLoading(false);
-        navigation?.navigate(routeName?.CHAT, {
-          displayName: displayName,
-          uid: uid,
-          photoURL: photoURL,
-          chatId: combinedId,
+          [`${combinedId}.date`]: serverTimestamp(),
         });
       } else {
-        setLoading(false);
-        await updateDoc(doc(db, "userChats", currentUser?.uid), {
-          [combinedId + ".userInfo"]: {
-            uid: uid,
-            displayName: displayName,
-            email: email,
-            photoURL: photoURL,
+        // Chat exists → just update timestamps/user info
+        await updateDoc(doc(firestore, "userChats", currentUser?.uid), {
+          [`${combinedId}.userInfo`]: {
+            uid,
+            displayName,
+            email,
+            photoURL,
             user_id: id,
           },
-          [combinedId + ".date"]: serverTimestamp(),
+          [`${combinedId}.date`]: serverTimestamp(),
         });
 
-        await updateDoc(doc(db, "userChats", uid), {
-          [combinedId + ".userInfo"]: {
+        await updateDoc(doc(firestore, "userChats", uid), {
+          [`${combinedId}.userInfo`]: {
             uid: currentUser.uid,
             displayName: currentUser.displayName,
             email: currentUser.email,
             photoURL: currentUser.photoURL,
-            user_id: user_id,
+            user_id,
           },
-          [combinedId + ".date"]: serverTimestamp(),
-        });
-
-        navigation?.navigate(routeName?.CHAT, {
-          displayName: displayName,
-          uid: uid,
-          photoURL: photoURL,
-          chatId: combinedId,
+          [`${combinedId}.date`]: serverTimestamp(),
         });
       }
+
+      navigation?.navigate(routeName?.CHAT, {
+        displayName,
+        uid,
+        photoURL,
+        chatId: combinedId,
+      });
     } catch (err) {
-      setLoading(false);
       console.error("Error handling message:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const checkUIDInFirestore = async (uid) => {
-    if (!uid) {
-      return false;
-    }
-    const ref = doc(db, "users", uid.trim());
+    if (!uid) return false;
+    const ref = doc(firestore, "users", uid.trim());
     const snapshot = await getDoc(ref);
     return snapshot.exists();
   };
@@ -323,7 +326,7 @@ export const useHandleMessage = () => {
   ) => {
     setLoading(true);
     console.log(
-      " handleMessage------",
+      "handleMessage------",
       email,
       uid,
       displayName,
@@ -332,7 +335,9 @@ export const useHandleMessage = () => {
       id,
       user_type
     );
+
     const existingUID = await checkUIDInFirestore(uid);
+
     if (email) {
       if ((!uid && !existingUID) || (uid && !existingUID)) {
         await handleFirebaseRegister(
@@ -345,53 +350,19 @@ export const useHandleMessage = () => {
           user_type
         );
       } else if (uid && existingUID) {
-        // await signOut(auth);
         await createChatCollection(
           email,
           uid,
           displayName,
           setLoading,
           photoURL,
-          id,
-          user_type
+          id
         );
       }
     }
+
+    setLoading(false);
   };
 
   return handleMessage;
 };
-
-//   const handleMessage = async (
-//     email,
-//     uid,
-//     displayName,
-//     setLoading,
-//     photoURL,
-//     id
-//   ) => {
-//     if (email) {
-//       if (!uid) {
-//         // await signOut(firebaseAuth);
-//         await handleFirebaseRegister(
-//           FIREBASE_KEY,
-//           email,
-//           displayName,
-//           setLoading,
-//           photoURL,
-//           id
-//         );
-//       } else {
-//         await createChatCollection(
-//           email,
-//           uid,
-//           displayName,
-//           setLoading,
-//           photoURL,
-//           id
-//         );
-//       }
-//     }
-//   };
-//   return handleMessage;
-// };

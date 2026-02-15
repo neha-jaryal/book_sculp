@@ -65,21 +65,30 @@ const SocialLogin = (props) => {
       }
     }
   };
+  
   useEffect(() => {
     GoogleSignin.configure({
       webClientId:
-        "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
-      iosClientId:
-        "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
-      scopes: [
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/user.gender.read",
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/user.birthday.read",
-        "openid",
-      ],
+        "646055473905-amb2kn64mur11l5t0o76et9k9btniva5.apps.googleusercontent.com",
+      offlineAccess: true,
     });
   }, []);
+
+  // useEffect(() => {
+  //   GoogleSignin.configure({
+  //     webClientId:
+  //       "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+  //     iosClientId:
+  //       "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+  //     scopes: [
+  //       "https://www.googleapis.com/auth/userinfo.email",
+  //       "https://www.googleapis.com/auth/user.gender.read",
+  //       "https://www.googleapis.com/auth/userinfo.profile",
+  //       "https://www.googleapis.com/auth/user.birthday.read",
+  //       "openid",
+  //     ],
+  //   });
+  // }, []);
 
   const handleFirebaseLogin = async (email) => {
     dispatch(navigatorStatus(routeName?.DRAWER, "", false));
@@ -358,10 +367,10 @@ const SocialLogin = (props) => {
       }
       const googleCredential = auth.GoogleAuthProvider.credential(
         idToken,
-        accessToken
+        accessToken,
       );
       const firebaseUserCredential = await auth().signInWithCredential(
-        googleCredential
+        googleCredential,
       );
       setUserCreds(firebaseUserCredential);
       const firebaseUser = firebaseUserCredential.user;
@@ -392,10 +401,10 @@ const SocialLogin = (props) => {
     } = appleAuthRequestResponse;
     const appleCredential = auth.AppleAuthProvider.credential(
       identityToken,
-      nonce
+      nonce,
     );
     const firebaseUserCredential = await auth().signInWithCredential(
-      appleCredential
+      appleCredential,
     );
     const firebase_user = auth().currentUser;
     firebaseUserCredential.user.email = email;
@@ -543,7 +552,7 @@ const SocialLogin = (props) => {
               index != 0 && (
                 <>
                   <TouchableOpacity
-                    key={index}
+                    key={index.toString()}
                     style={{ ...styles.login_button, marginRight: 30 }}
                     onPress={() => item?.onClick()}
                   >

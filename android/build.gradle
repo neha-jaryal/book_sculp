@@ -1,21 +1,51 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
 buildscript {
     ext {
-        buildToolsVersion = "36.0.0"
-        minSdkVersion = 24
-        compileSdkVersion = 36
-        targetSdkVersion = 36
-        ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.1.20"
+        // Shared versions – you can override in app/build.gradle if needed
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 21
+        compileSdkVersion = 35
+        targetSdkVersion = 35
+
+        // Optional: Set a project-wide NDK version fallback
+        // ndkVersion = "25.2.9519653"   // Uncomment if you want global default
+        // or "28.0.12674087" for newer
     }
+
     repositories {
         google()
         mavenCentral()
     }
+
     dependencies {
-        classpath("com.android.tools.build:gradle")
-        classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // Android Gradle Plugin – use a recent stable version compatible with RN 0.83
+        classpath("com.android.tools.build:gradle:8.5.0")  // or 8.6+ if available in your AS
+
+        // Kotlin plugin (since you apply org.jetbrains.kotlin.android in app/build.gradle)
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")  // Match your Kotlin version
+
+        // React Native itself handles its plugin via apply plugin: "com.facebook.react" in app/build.gradle
     }
 }
 
-apply plugin: "com.facebook.react.rootproject"
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+
+        // Required for React Native local AARs and prefabs
+        maven {
+            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+            url("$rootDir/../node_modules/react-native/android")
+        }
+
+        // For some community libs or old deps
+        maven { url 'https://www.jitpack.io' }
+    }
+}
+
+// Optional: Clean task for the whole project
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import { routeName } from "../Utility/routeName";
@@ -15,7 +16,7 @@ import { getData, storageKey, storeData } from "../Utility/Storage";
 import { AdminStacks } from "./Stacks/Admin";
 import { useFocusEffect } from "@react-navigation/native";
 import { getUserDetail } from "../Redux/Services/AuthServices";
-import { KeyboardAvoidingView, Platform } from "react-native";
+import { View } from "react-native";
 
 const Tab = createBottomTabNavigator();
 
@@ -31,7 +32,7 @@ const BottomTab = ({ route }) => {
   useFocusEffect(
     React.useCallback(() => {
       getUserData();
-    }, [userRole])
+    }, [userRole]),
   );
   const getUserData = async () => {
     let userID = await getData(storageKey?.USER_ID);
@@ -45,11 +46,11 @@ const BottomTab = ({ route }) => {
       if (res?.status == 200) {
         storeData(
           storageKey?.APPROVAL_STATUS,
-          JSON?.stringify(res?.results?.user_data?.profile_approval)
+          JSON?.stringify(res?.results?.user_data?.profile_approval),
         );
         storeData(
           storageKey?.USER_STATUS,
-          JSON?.stringify(res?.results?.user_data?.completed_step)
+          JSON?.stringify(res?.results?.user_data?.completed_step),
         );
       }
     }
@@ -67,18 +68,12 @@ const BottomTab = ({ route }) => {
           ? routeName?.HOME
           : routeName?.HOME_STACKS
       }
-      barStyle={{
-        activeTintColor: Colors?.themeColor,
-        inactiveTintColor: Colors?.darkgrey,
-        labelStyle: {
-          color: Colors?.black,
-        },
-      }}
+      tabBarBackgroundColor={Colors?.white}
       screenOptions={{
         headerShown: false,
-        tabBarAllowFontScaling: false,
+        tabBarAllowFontScaling: true,
         tabBarStyle: {
-          paddingVertical: dimensionheight("0.5%"),
+          ...styles.bottomTabStyle,
         },
         tabBarActiveTintColor: Colors?.themeColor,
         tabBarShowLabel: false,
@@ -98,16 +93,32 @@ const BottomTab = ({ route }) => {
         options={({ route }) => ({
           tabBarIcon: ({ focused }) => (
             <>
-              <Ionicons
-                name={focused ? "home" : "home-outline"}
-                color={Colors?.themeColor}
-                size={20}
-              />
-              <TextComponent
-                text="Home"
-                color={focused ? Colors.themeColor : "#000"}
-                size={Sizes.xs}
-              />
+              <View
+                style={{
+                  height: 35,
+                  width: 35,
+                  alignContent: "center",
+                  alignItems: "center",
+                  // backgroundColor: Colors?.white,
+                  // // padding: 10,
+                  // borderRadius: 50,
+                  // justifyContent: "center",
+                  // alignItems: "center",
+                }}
+              >
+                <Ionicons
+                  name={focused ? "home" : "home-outline"}
+                  color={Colors?.black}
+                  size={20}
+                />
+                <TextComponent
+                  text="Home"
+                  color={Colors?.black}
+                  fontWeight={focused ? "600" : "500"}
+                  size={9}
+                  style={{ marginTop: 2 }}
+                />
+              </View>
             </>
           ),
         })}
@@ -117,18 +128,28 @@ const BottomTab = ({ route }) => {
         component={Stacks?.SearchStacks}
         options={({ route }) => ({
           tabBarIcon: ({ focused }) => (
-            <>
-              <Ionicons
-                name={focused ? "search" : "search-outline"}
-                color={Colors?.themeColor}
+            <View
+              style={{
+                height: 35,
+                width: 40,
+                alignContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <MaterialCommunityIcons
+                name={focused ? "account-search" : "account-search-outline"}
+                color={Colors?.black}
                 size={20}
               />
+
               <TextComponent
-                text="Search"
-                color={focused ? Colors.themeColor : "#000"}
-                size={Sizes.xs}
+                text="Explore"
+                color={Colors?.black}
+                fontWeight={focused ? "600" : "500"}
+                size={9}
+                style={{ marginTop: 2 }}
               />
-            </>
+            </View>
           ),
         })}
       />
@@ -138,18 +159,27 @@ const BottomTab = ({ route }) => {
           component={otherScreens?.Home}
           options={({ route }) => ({
             tabBarIcon: ({ focused }) => (
-              <>
+              <View
+                style={{
+                  height: 35,
+                  width: 35,
+                  alignContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <MaterialCommunityIcons
                   name={focused ? "post" : "post-outline"}
-                  color={Colors?.themeColor}
+                  color={Colors?.black}
                   size={20}
                 />
                 <TextComponent
                   text="Feed"
-                  color={focused ? Colors.themeColor : "#000"}
-                  size={Sizes.xs}
+                  color={Colors?.black}
+                  fontWeight={focused ? "600" : "500"}
+                  size={9}
+                  style={{ marginTop: 2 }}
                 />
-              </>
+              </View>
             ),
           })}
         />
@@ -173,12 +203,14 @@ const BottomTab = ({ route }) => {
             tabBarIcon: ({ focused }) => (
               <>
                 <AntDesign
-                  name={"pluscircle"}
-                  color={Colors?.themeColor}
-                  size={50}
+                  name={focused ? "pluscircle" : "pluscircleo"}
+                  color={Colors?.black}
+                  size={30}
                   style={{
-                    position: "absolute",
-                    bottom: 20,
+                    width: 35,
+                    height: 35,
+                    // position: "absolute",
+                    // bottom: 25,
                     // backgroundColor: Colors?.white,
                     // borderRadius: 100,
                   }}
@@ -193,20 +225,20 @@ const BottomTab = ({ route }) => {
         component={Stacks?.JobStacks}
         options={({ route }) => ({
           tabBarIcon: ({ focused }) => (
-            <>
-              {focused ? (
-                <Ionicons
-                  name={"briefcase"}
-                  color={Colors?.themeColor}
-                  size={20}
-                />
-              ) : (
-                <MaterialIcons
-                  name={"work-outline"}
-                  color={Colors?.themeColor}
-                  size={20}
-                />
-              )}
+            <View
+              style={{
+                height: 35,
+                width: 35,
+                alignContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons
+                name={focused ? "work" : "work-outline"}
+                color={Colors?.black}
+                fontWeight={focused ? "600" : "500"}
+                size={20}
+              />
 
               {/* <MaterialCommunityIcons
                 name={
@@ -218,10 +250,12 @@ const BottomTab = ({ route }) => {
 
               <TextComponent
                 text="Jobs"
-                color={focused ? Colors.themeColor : "#000"}
-                size={Sizes.xs}
+                color={Colors?.black}
+                fontWeight={focused ? "600" : "500"}
+                size={9}
+                style={{ marginTop: 2 }}
               />
-            </>
+            </View>
           ),
         })}
       />
@@ -230,18 +264,27 @@ const BottomTab = ({ route }) => {
         component={Stacks?.ProfileStacks}
         options={({ route }) => ({
           tabBarIcon: ({ focused }) => (
-            <>
+            <View
+              style={{
+                height: 35,
+                width: 45,
+                alignContent: "center",
+                alignItems: "center",
+              }}
+            >
               <FontAwesome
                 name={focused ? "user" : "user-o"}
-                color={Colors?.themeColor}
+                color={Colors?.black}
                 size={20}
               />
               <TextComponent
-                text="Profile"
-                color={focused ? Colors.themeColor : "#000"}
-                size={Sizes.xs}
+                text="Account"
+                color={Colors?.black}
+                fontWeight={focused ? "600" : "500"}
+                size={9}
+                style={{ marginTop: 2 }}
               />
-            </>
+            </View>
           ),
         })}
       />
@@ -250,3 +293,25 @@ const BottomTab = ({ route }) => {
 };
 
 export default BottomTab;
+
+const styles = {
+  bottomTabStyle: {
+    position: "absolute",
+    marginHorizontal: 15,
+    height: dimensionheight("7%"),
+    backgroundColor: Colors?.gredient,
+    borderTopWidth: 0,
+    elevation: 10,
+    opacity: 0.8,
+    shadowOpacity: 0,
+    bottom: 25,
+    borderRadius: 60,
+    shadowColor: Colors?.black,
+    paddingTop: 12,
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    // shadowRadius: 3.5,
+  },
+};

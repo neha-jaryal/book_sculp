@@ -352,7 +352,9 @@ export const UserDashboard = ({ navigation }) => {
   return (
     <>
       <DashboardHeader navigation={navigation} />
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: "#fff",  }}
+      >
         <FlatList
           data={dashboardItems}
           keyExtractor={(item, index) => index.toString()}
@@ -362,8 +364,10 @@ export const UserDashboard = ({ navigation }) => {
             paddingHorizontal: 12,
           }}
           contentContainerStyle={{
-            paddingVertical: 20,
+            paddingVertical: 12,
+            paddingBottom: 100,
           }}
+          style={{ flex: 1, backgroundColor: Colors?.white }}
           renderItem={({ item }) =>
             item?.show ? (
               <TouchableOpacity

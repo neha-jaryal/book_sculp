@@ -224,7 +224,7 @@ export const ManageAccount = ({ navigation }) => {
           text: "Yes",
           onPress: () => deleteAccount(),
         },
-      ]
+      ],
     );
   };
 
@@ -354,7 +354,7 @@ export const ManageAccount = ({ navigation }) => {
           </View>
           <View
             style={{
-              ...Styles?.container,
+              // ...Styles?.container,
               marginHorizontal: 0,
               width: "100%",
             }}
@@ -375,7 +375,7 @@ export const ManageAccount = ({ navigation }) => {
                   <View style={{ padding: 10 }}>
                     {settingsOptions?.map((item) => {
                       return (
-                        <View style={Styles?.flexRow}>
+                        <View style={{ ...Styles?.flexRow }} key={item?.type}>
                           <TextComponent
                             text={item?.name}
                             size={Sizes?.l}
@@ -383,7 +383,10 @@ export const ManageAccount = ({ navigation }) => {
                             color={Colors?.darkgrey}
                             style={{ marginVertical: 8, width: 280 }}
                           />
-                          <TouchableOpacity onPress={() => item?.onclick()}>
+                          <TouchableOpacity
+                            onPress={() => item?.onclick()}
+                            style={{ position: "absolute", right: 0 }}
+                          >
                             <MaterialCommunityIcons
                               size={45}
                               name={
@@ -589,12 +592,12 @@ export const ManageAccount = ({ navigation }) => {
                 </TouchableOpacity> */}
               </>
             ) : tab == 2 ? (
-              <View style={{ paddingVertical: 15, alignItems: "center" }}>
-                <Lotties
+              <View style={{ paddingVertical: 15,   }}>
+                {/* <Lotties
                   source={JSONS?.passordJSON}
                   style={{ width: "100%", marginTop: -15, marginLeft: 10 }}
-                />
-                <View style={{ marginTop: -60, paddingHorizontal: 20 }}>
+                /> */}
+                <View style={{ marginTop: 10, paddingHorizontal: 20 }}>
                   <InputBox
                     type="password"
                     value={password.trim()}
@@ -620,7 +623,7 @@ export const ManageAccount = ({ navigation }) => {
                 />
               </View>
             ) : tab == 3 ? (
-              <View>
+              <View style={{ paddingVertical: 15 }}>
                 <InputBox
                   required
                   type="password"

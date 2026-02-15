@@ -149,7 +149,7 @@ export const showAlertWithCallBack = (msg, onOkClick) => {
     ],
     {
       cancelable: false,
-    }
+    },
   );
 };
 
@@ -453,7 +453,7 @@ export const getAccountApproval = async (show, navigation, auth) => {
               ? navigation?.navigate(routeName?.EDIT_PROFILE)
               : navigation?.navigate(routeName?.EDIT_PHOTOGRAPHER),
         },
-      ]
+      ],
     );
   }
 
@@ -505,14 +505,15 @@ const getAppOpenedCount = async () => {
   }
 };
 
-const startAppOpenedTracking = (onAppStateChange) => {
-  AppState.addEventListener("change", onAppStateChange);
+let appStateSubscription = null;
+
+const startAppOpenedTracking = (callback) => {
+  appStateSubscription = AppState.addEventListener("change", callback);
 };
 
-const stopAppOpenedTracking = (onAppStateChange) => {
-  AppState.removeEventListener("change", onAppStateChange);
+const stopAppOpenedTracking = () => {
+  appStateSubscription?.remove?.();
 };
-
 export {
   incrementAppOpenedCount,
   getAppOpenedCount,
@@ -543,7 +544,7 @@ export const handleSubscriptionAlert = async (navigation) => {
               text: "Yes",
               onPress: () => navigation?.navigate(routeName?.PACKAGES),
             },
-          ]
+          ],
         );
       }
     }, 3000);

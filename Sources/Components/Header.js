@@ -91,7 +91,7 @@ export const Header = (props) => {
                 // text={"● " + onlineStatus}
                 text={onlineStatus}
                 color={
-                  onlineStatus == "Typing....."
+                  onlineStatus == "typing"
                     ? Colors?.darkYellow
                     : onlineStatus === "online"
                     ? Colors?.themeColor

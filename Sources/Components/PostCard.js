@@ -44,21 +44,21 @@ import {
   savePost,
   userFollowing,
 } from "../Redux/Services/OtherServices";
-import FontAwesome from "react-native-vector-icons/FontAwesome"; 
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import SimpleLineIcons from "react-native-vector-icons/SimpleLineIcons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import Octicons from "react-native-vector-icons/Octicons"; 
+import Octicons from "react-native-vector-icons/Octicons";
 import Entypo from "react-native-vector-icons/Entypo";
 import { useDispatch, useSelector } from "react-redux";
-import { ImageView } from "./ImageView";  
-import { getData, storageKey } from "../Utility/Storage"; 
+import { ImageView } from "./ImageView";
+import { getData, storageKey } from "../Utility/Storage";
 import { getUserDetail } from "../Redux/Services/AuthServices";
-import { SAVE_POST, UNSAVE_POST } from "../API Services/Url"; 
+import { SAVE_POST, UNSAVE_POST } from "../API Services/Url";
 import { ReportUser } from "./ReportUser";
 import { reasonList } from "../Global";
 import { useHandleMessage } from "../Utility/FirestoreHelper";
-import { ChatContext } from "../Context/ChatContext"; 
-import { TapGestureHandler, State } from "react-native-gesture-handler"; 
+import { ChatContext } from "../Context/ChatContext";
+import { TapGestureHandler, State } from "react-native-gesture-handler";
 import { PostMediaViewer } from "./PostMediaViewer";
 
 const { width, height } = Dimensions.get("window");
@@ -182,25 +182,46 @@ export const PostCard = (props) => {
     }
   };
 
+  // const handleLikeDislike = async (status) => {
+  //   setLikeStatus({
+  //     ...likeStatus,
+  //     status: status === 0 ? 1 : 0,
+  //     count:
+  //       status === 0
+  //         ? parseInt(likeStatus?.count || 0) + 1
+  //         : parseInt(likeStatus?.count || 0) - 1,
+  //   });
+
+  //   const userId = await getData(storageKey?.USER_ID);
+  //   const body = {
+  //     type: status === 0 ? "like" : "unlike",
+  //     user_id: userId,
+  //     post_id: cardData?.post_details?.ID,
+  //   };
+
+  //   const res = await dispatch(likeDislike(body));
+  //   if (res?.status === 200) {
+  //     refreshList();
+  //   }
+  // };
+
   const handleLikeDislike = async (status) => {
     setLikeStatus({
       ...likeStatus,
-      status: status === 0 ? 1 : 0,
+      status: status == 0 ? 1 : 0,
       count:
-        status === 0
-          ? parseInt(likeStatus?.count || 0) + 1
-          : parseInt(likeStatus?.count || 0) - 1,
+        status == 0
+          ? JSON.parse(likeStatus?.count) + 1
+          : JSON.parse(likeStatus?.count) - 1,
     });
-
     const userId = await getData(storageKey?.USER_ID);
-    const body = {
-      type: status === 0 ? "like" : "unlike",
+    var body = {
+      type: status == 0 ? "like" : "unlike",
       user_id: userId,
       post_id: cardData?.post_details?.ID,
     };
-
-    const res = await dispatch(likeDislike(body));
-    if (res?.status === 200) {
+    let res = await dispatch(likeDislike(body));
+    if (res?.status == 200) {
       refreshList();
     }
   };
@@ -251,7 +272,7 @@ export const PostCard = (props) => {
             <PostMediaViewer
               media={cardData?.media ?? []}
               onLike={() => handleLikeDislike(likeStatus?.status)}
-              containerHeight={500}
+              containerHeight={400}
             />
             <View style={styling.cardContentView}>
               <TouchableOpacity
@@ -331,12 +352,12 @@ export const PostCard = (props) => {
             ...styling.postDeatils,
             padding: 0,
             paddingTop: 5,
-            paddingBottom: 20,
+            paddingBottom: 10,
             paddingHorizontal: isLoading ? 0 : 20,
             marginTop: -15,
           }}
         >
-          <View style={{ ...Styles?.row, paddingVertical: 10 }}>
+          <View style={{ ...Styles?.row, paddingVertical: 5 }}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <TouchableOpacity
                 onPress={() =>
@@ -1069,7 +1090,7 @@ const ThreeDotsModalContent = (props) => {
 
   return (
     <ScrollView style={{ flex: 1 }}>
-      <View style={{ paddingVertical: 20 }}> 
+      <View style={{ paddingVertical: 20 }}>
         <View
           style={{
             ...Styles.flexRow,

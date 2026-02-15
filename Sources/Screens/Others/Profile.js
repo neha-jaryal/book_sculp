@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -14,6 +14,9 @@ import { Styles } from "../../Styles";
 import { routeName } from "../../Utility/routeName";
 import Entypo from "react-native-vector-icons/Entypo";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import AntDesign from "react-native-vector-icons/AntDesign";
+import Feather from "react-native-vector-icons/Feather";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserDetail, userLogout } from "../../Redux/Services/AuthServices";
 import { navigatorStatus } from "../../Redux/Actions/AuthActions";

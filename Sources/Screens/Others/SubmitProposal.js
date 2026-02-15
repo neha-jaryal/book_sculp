@@ -51,7 +51,7 @@ export const SubmitProposal = ({ route, navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       getServiceFee();
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
@@ -132,7 +132,7 @@ export const SubmitProposal = ({ route, navigation }) => {
       parseFloat(
         jobDetail?.post_meta_details?.usage_fee
           ? jobDetail?.post_meta_details?.usage_fee
-          : 0
+          : 0,
       );
     // console.log(
     //   "amountamountamount------",
@@ -170,10 +170,10 @@ export const SubmitProposal = ({ route, navigation }) => {
       // serviceFee +
       // parseFloat(jobDetail?.post_meta_details?.amount_of_per_diem_provided);
       let startDate = moment(
-        jobDetail?.post_meta_details?.starting_date
+        jobDetail?.post_meta_details?.starting_date,
       ).format("DD/MM/YYYY");
       let endDate = moment(jobDetail?.post_meta_details?.end_date).format(
-        "DD/MM/YYYY"
+        "DD/MM/YYYY",
       );
       var diffDays = parseFloat(endDate) - parseFloat(startDate);
       let body = {
@@ -202,12 +202,22 @@ export const SubmitProposal = ({ route, navigation }) => {
     <>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         enabled={true}
-        behavior={Platform?.OS == "ios" ? "position" : null}
       >
         <Header text={"Submit Proposal"} navigation={navigation} />
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingBottom: 100,
+          }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+        >
           <View style={Styles?.container}>
             <View style={Styles?.flexRow}>
               <TextComponent
@@ -239,6 +249,7 @@ export const SubmitProposal = ({ route, navigation }) => {
                 color={Colors?.black}
               />
             </View>
+
             <View style={styling?.employeeDetailView}>
               <Image
                 source={Images?.employeeIcon}
@@ -259,13 +270,16 @@ export const SubmitProposal = ({ route, navigation }) => {
               />
             </View>
           </View>
-          <View style={{ ...Styles?.container, marginBottom: 20 }}>
+
+          <View style={{ ...Styles?.container }}>
             <TextComponent
               text="Total amount the client will see on your proposal"
               size={Sizes?.l}
               style={{ padding: 10 }}
             />
-            <View style={{ ...Styles?.flexRow, width: "95%" }}>
+            <View
+              style={{ ...Styles?.flexRow, width: "95%", position: "relative" }}
+            >
               <InputBox
                 type="numeric"
                 value={totalAmount}
@@ -279,20 +293,19 @@ export const SubmitProposal = ({ route, navigation }) => {
                 }}
                 icon={Images?.dollarIcon}
                 keyboardType="numeric"
-                style={{ position: "relative" }}
               />
               <TouchableOpacity
                 onPress={() => setShowDetails(!showDetails)}
-                style={{ position: "absolute", right: 0 }}
+                style={{ position: "absolute", right: 10, top: 12 }}
               >
                 <FontAwesome
                   name={showDetails ? "angle-up" : "angle-down"}
                   color={Colors?.themeColor}
                   size={25}
-                  style={{ paddingRight: 10 }}
                 />
               </TouchableOpacity>
             </View>
+
             {showDetails ? (
               <>
                 {jobDetail?.post_meta_details?._hourly_rate &&
@@ -324,7 +337,7 @@ export const SubmitProposal = ({ route, navigation }) => {
                         ? "$" +
                           parseFloat(totalAmount) *
                             parseFloat(
-                              jobDetail?.post_meta_details?._estimated_hours
+                              jobDetail?.post_meta_details?._estimated_hours,
                             )
                         : parseFloat(totalAmount)
                     }
@@ -341,6 +354,7 @@ export const SubmitProposal = ({ route, navigation }) => {
                 </View>
 
                 <View style={Styles?.separator} />
+
                 {jobDetail?.post_meta_details?.usage_fee ? (
                   <>
                     <View style={{ marginHorizontal: 10 }}>
@@ -375,7 +389,9 @@ export const SubmitProposal = ({ route, navigation }) => {
                     style={{ marginTop: 4 }}
                   />
                 </View>
+
                 <View style={Styles?.separator} />
+
                 <View style={{ marginHorizontal: 10 }}>
                   <TextComponent
                     text={`$${
@@ -393,7 +409,9 @@ export const SubmitProposal = ({ route, navigation }) => {
                     style={{ marginTop: 4 }}
                   />
                 </View>
+
                 <View style={Styles?.separator} />
+
                 <>
                   <View style={{ marginHorizontal: 10 }}>
                     <TextComponent
@@ -411,7 +429,9 @@ export const SubmitProposal = ({ route, navigation }) => {
                   </View>
                   <View style={Styles?.separator} />
                 </>
+
                 <View style={Styles?.separator} />
+
                 <>
                   <View style={{ marginHorizontal: 10 }}>
                     <TextComponent
@@ -444,74 +464,7 @@ export const SubmitProposal = ({ route, navigation }) => {
               style={{ marginVertical: 8 }}
               isEmpty={error && isFieldEmpty(coverLatter)}
             />
-            {/* <TouchableOpacity
-            onPress={() => SelectFiles()}
-            style={{
-              ...Styles?.flexRow,
-              borderWidth: 1,
-              borderColor: Colors?.themeColor,
-              borderStyle: "dotted",
-              borderRadius: 25,
-              marginVertical: 20,
-            }}
-          >
-            <View
-              style={{
-                ...Styles?.smallButton,
-                backgroundColor: Colors?.themeColor,
-                paddingHorizontal: 20,
-                marginVertical: 0,
-                paddingVertical: 8,
-              }}
-            >
-              <TextComponent
-                text="Select Files"
-                size={Sizes?.xs}
-                fontWeight="400"
-                color={Colors?.white}
-              />
-            </View>
-          </TouchableOpacity>
-          {files?.length != 0 && (
-            <FlatList
-              data={files}
-              contentContainerStyle={{ width: "100%", marginVertical: 10 }}
-              keyExtractor={(item, index) => index}
-              renderItem={({ item }) => (
-                <View
-                  style={{
-                    position: "relative",
-                    width: 90,
-                    margin: 6,
-                  }}
-                >
-                  <Image
-                    source={{ uri: item?.uri ? item?.uri : item?.url }}
-                    style={{
-                      width: 90,
-                      height: 90,
-                      borderRadius: 10,
-                    }}
-                  />
-                  <TouchableOpacity
-                    onPress={() => removeSelectedImage(item, "gallery")}
-                    style={{ right: -2, position: "absolute", top: -2 }}
-                  >
-                    <Entypo
-                      name="circle-with-cross"
-                      size={15}
-                      color={Colors?.pink}
-                      style={{
-                        backgroundColor: Colors?.white,
-                        borderRadius: 100,
-                      }}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-              numColumns={3}
-            />
-          )} */}
+
             <TouchableOpacity
               style={{
                 ...Styles?.smallButton,
@@ -531,7 +484,6 @@ export const SubmitProposal = ({ route, navigation }) => {
               />
             </TouchableOpacity>
           </View>
-          <View style={{ height: 30 }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </>

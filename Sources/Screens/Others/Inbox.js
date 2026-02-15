@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useContext, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -17,531 +17,397 @@ import { Header, TextComponent } from "../../Components";
 import { Styles } from "../../Styles";
 import { Searchbar } from "react-native-paper";
 import { routeName, timeSince } from "../../Utility";
-import { useEffect } from "react";
+import { AuthContext } from "../../Context/AuthContext";
+import { ChatContext } from "../../Context/ChatContext";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import Entypo from "react-native-vector-icons/Entypo";
-import { getUserDetail } from "../../Redux/Services/AuthServices";
-import { AuthContext } from "../../Context/AuthContext";
-import { ChatContext } from "../../Context/ChatContext";
+
+// Modular Firestore imports
 import {
+  getFirestore,
+  collection,
   doc,
   onSnapshot,
+  getDoc,
   updateDoc,
   deleteField,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "../../Utility/Firebase";
-export const Inbox = memo(({ navigation }) => {
-  // const dispatch = useDispatch();
-  const swipeRef = useRef(null);
+} from "@react-native-firebase/firestore";
+
+export const Inbox = ({ navigation }) => {
   const [typingStatus, setTypingStatus] = useState({});
-  const [isDelete, setIsDelete] = useState(false);
   const [chatId, setChatId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [chatList, setChatList] = useState([]);
+  const [allChats, setAllChats] = useState({});
+  const [displayChats, setDisplayChats] = useState({});
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [swiperHide, setSwiperHide] = useState(true);
-  const [swipedItems, setSwipedItems] = useState({});
-  const [swipeableRef, setSwipeableRef] = useState(null);
-  const [userRole, setUserRole] = useState("");
   const [emptyList, setEmptyList] = useState(false);
-  let arr = chatList;
+
   const { currentUser } = useContext(AuthContext);
   const { dispatch } = useContext(ChatContext);
-  console.log("currentUsercurrentUser----", currentUser);
+
+  const db = getFirestore(); // ← single instance
+
+  // Listen to userChats
   useEffect(() => {
-    const unsub = getChats();
-    return () => unsub();
-  }, [currentUser?.uid]);
+    if (!currentUser?.uid) return;
 
-  const getChats = useCallback(() => {
-    const unsub = onSnapshot(
-      doc(db, "userChats", currentUser?.uid),
-      async (docs) => {
-        const chatData = docs.data();
-        setChatList(chatData);
-        if (chatData) {
-          Object.entries(chatData).forEach(async ([chatId, chat]) => {
-            const chatRef = doc(db, "chats", chatId);
-            const typingStatusRef = doc(
-              db,
-              "typingStatus",
-              `${currentUser?.uid}_${chat?.userInfo?.uid}`
-            );
-            // const messageStatus = onSnapshot(chatRef, (chatDoc) => {
-            //   const messages = chatDoc.data()?.messages || [];
-            //   messages.forEach(async (message) => {
-            //     if (
-            //       message.status === "sent" &&
-            //       message?.receiverId === currentUser?.uid
-            //     ) {
-            //       // Update message status to "delivered"
-            //       const messageIndex = messages.findIndex(
-            //         (m) => m.id === message.id
-            //       );
-            //       messages[messageIndex].status = "delivered";
-            //       await updateDoc(chatRef, { messages });
-            //     }
-            //   });
-            // });
+    const userChatsRef = doc(db, "userChats", currentUser.uid);
 
-            // Track typing status
-            const typingStatus = onSnapshot(typingStatusRef, (typingDoc) => {
-              if (typingDoc.exists()) {
-                setTypingStatus((prevStatus) => ({
-                  ...prevStatus,
-                  [chat?.userInfo?.uid]: typingDoc.data()?.typing,
-                }));
-              }
-            });
-            return () => {
-              // messageStatus();
-              typingStatus();
-            };
-          });
-        }
+    const unsubscribe = onSnapshot(userChatsRef, (docSnap) => {
+      if (!docSnap.exists()) {
+        setAllChats({});
+        setDisplayChats({});
+        setEmptyList(true);
+        return;
       }
-    );
-    return () => unsub();
-  }, [currentUser?.uid]);
 
-  console.log("chatListtttt--------", chatList);
+      const rawData = docSnap.data() || {};
+      const validChats = {};
+
+      Object.entries(rawData).forEach(([chatIdKey, chat]) => {
+        if (
+          chat &&
+          chat.date?.seconds != null &&
+          chat.userInfo?.uid &&
+          chat.lastMessage
+        ) {
+          validChats[chatIdKey] = chat;
+        }
+      });
+
+      setAllChats(validChats);
+      setDisplayChats(validChats);
+      setEmptyList(Object.keys(validChats).length === 0);
+    });
+
+    return () => unsubscribe();
+  }, [currentUser?.uid, db]);
+
+  // Typing status listeners
+  useEffect(() => {
+    if (!currentUser?.uid || Object.keys(allChats).length === 0) return;
+
+    const unsubscribes = [];
+
+    Object.entries(allChats).forEach(([chatIdKey, chat]) => {
+      const otherUserUid = chat?.userInfo?.uid;
+      if (!otherUserUid) return;
+
+      const typingRef = doc(
+        db,
+        "typingStatus",
+        `${currentUser.uid}_${otherUserUid}`,
+      );
+
+      const unsubscribeTyping = onSnapshot(typingRef, (snap) => {
+        setTypingStatus((prev) => ({
+          ...prev,
+          [otherUserUid]: snap.exists() ? snap.data()?.typing || false : false,
+        }));
+      });
+
+      unsubscribes.push(unsubscribeTyping);
+    });
+
+    return () => unsubscribes.forEach((unsub) => unsub());
+  }, [allChats, currentUser?.uid, db]);
 
   const onChangeSearch = (query) => {
     setSearchQuery(query);
-    if (query?.length != 0) {
-      let arr = chatList;
-      var expr = new RegExp(query, "gi");
-      var wordList = arr.filter(
-        (elem) =>
-          expr.test(elem[1]?.userInfo?.displayName) ||
-          expr.test(elem[1]?.lastMessage?.text)
-      );
-      setChatList(wordList);
-    } else {
-      getChats();
+    if (!query.trim()) {
+      setDisplayChats(allChats);
+      return;
     }
+
+    const lowerQuery = query.toLowerCase();
+    const filtered = Object.fromEntries(
+      Object.entries(allChats).filter(([, chat]) => {
+        const name = chat?.userInfo?.displayName?.toLowerCase() || "";
+        const lastMsg = chat?.lastMessage?.text?.toLowerCase() || "";
+        return name.includes(lowerQuery) || lastMsg.includes(lowerQuery);
+      }),
+    );
+    setDisplayChats(filtered);
   };
 
-  // // useEffect(() => {
-  // //   chatList?.map((item) => {
-  // //     if (item?.opened == false) {
-  // //       if (swipeRef) {
-  // //         swipeRef.current.close();
-  // //       }
-  // //     }
-  // //   });
-  // // });
-  // // const closeSwipeable = () => {
-  // //   if (swipeableRef) {
-  // //     swipeableRef.current.close();
-  // //   }
-  // // };
-  // const handleSwipeItem = (item, status) => {
-  //   let temp = chatList;
-  //   temp?.map((ele) =>
-  //     ele == item ? ele.opened == true : ele.opened == false
-  //   );
-  //   console.log("temp-------", temp);
-  //   let arr = [];
-  //   temp?.map((item) => {
-  //     arr?.push(item);
-  //   });
-  //   setChatList(arr);
-  // };
-
-  // const getAllChatList = async () => {
-  //   let userId = await getData(storageKey?.USER_ID);
-  //   let userRole = await getData(storageKey?.USER_ROLE);
-  //   setUserRole(userRole);
-  //   var body = {
-  //     user_id: userId,
-  //   };
-  //   let res = await dispatch(getChatList(body));
-  //   if (res?.status == 200) {
-  //     if (res?.results?.length == 0) {
-  //       setEmptyList(true);
-  //       setChatList([]);
-  //     } else {
-  //       setEmptyList(false);
-  //       setChatList(res?.results);
-  //     }
-  //     // const updatedChatList = res?.results.map((item) => ({
-  //     //   ...item,
-  //     //   opened: false,
-  //     // }));
-
-  //     // setChatList(updatedChatList);
-  //   }
-  // };
-  // console.log("chatlisttttttttt--------", JSON.stringify(chatList));
-
-  const handleSingleChat = async (item) => {
+  const handleSingleChat = (item) => {
     const userData = item[1]?.userInfo;
+    if (!userData) return;
 
     dispatch({ type: "CHANGE_USER", payload: userData });
     navigation?.navigate(routeName?.CHAT, {
-      displayName: userData?.displayName,
-      uid: userData?.uid,
-      photoURL: userData?.photoURL,
-      user_id: userData?.user_id,
+      displayName: userData.displayName,
+      uid: userData.uid,
+      photoURL: userData.photoURL,
+      user_id: userData.user_id,
     });
   };
+
   const handleSelectionMultiple = (item) => {
-    const userData = item[1]?.userInfo;
+    const userUid = item[1]?.userInfo?.uid;
+    if (!userUid) return;
+
+    setSelectedItems((prev) =>
+      prev.includes(userUid)
+        ? prev.filter((id) => id !== userUid)
+        : [...prev, userUid],
+    );
     setChatId(item[0]);
-    var selectedIds = [...selectedItems];
-    if (selectedIds.includes(userData?.uid)) {
-      selectedIds = selectedIds.filter((ele, index) => ele !== userData?.uid);
-    } else {
-      selectedIds.push(userData?.uid);
-    }
-    setSelectedItems(selectedIds);
   };
 
-  // const closeSwipeable = () => {
-  //   if (swipeableRef) {
-  //     swipeableRef.close();
-  //   }
-  // };
+  const handleDeleteChat = async () => {
+    if (!chatId) return;
 
-  // const deleteChat = async (item) => {
-  //   let userId = await getData(storageKey?.USER_ID);
+    Alert.alert("Delete Chat", "Are you sure you want to delete this chat?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const userChatsRef = doc(db, "userChats", currentUser.uid);
+          const chatDocRef = doc(db, "chats", chatId);
 
-  //   var body = {
-  //     action: "mutliple",
-  //     // action: "mutliple",
-  //     // action: "message",
-  //     user_id: userId,
-  //     chat_to: selectedItems,
-  //   };
-  //   setSwiperHide(false);
-  //   let res = await dispatch(clearUserChat(body));
-  //   if (res?.status == 200) {
-  //     getAllChatList();
-  //     setSelectedItems([]);
-  //     setSwiperHide(true);
-  //   }
-  // };
-  const handleDeleteChat = async (item) => {
-    Alert.alert("Are you sure?", "You want to delete this chat.", [
-      {
-        text: "No",
-        style: "cancel",
-      },
-      {
-        text: "Yes",
-        onPress: () => deleteChat(item),
+          try {
+            setLoading(true);
+
+            const chatSnap = await getDoc(chatDocRef);
+            if (chatSnap.exists()) {
+              const chatData = chatSnap.data();
+              const messages = chatData?.messages || [];
+              const updatedMessages = messages.map((msg) => ({
+                ...msg,
+                deletedFor: msg.deletedFor
+                  ? [...new Set([...msg.deletedFor, currentUser.uid])]
+                  : [currentUser.uid],
+              }));
+              await updateDoc(chatDocRef, { messages: updatedMessages });
+            }
+
+            await updateDoc(userChatsRef, {
+              [chatId]: deleteField(),
+            });
+
+            setSelectedItems((prev) => prev.filter((id) => id !== chatId));
+            dispatch({ type: "SWITCH_USER_NULL", payload: null });
+          } catch (error) {
+            console.error("Delete chat failed:", error);
+            Alert.alert("Error", "Failed to delete chat. Please try again.");
+          } finally {
+            setLoading(false);
+          }
+        },
       },
     ]);
   };
+
   const getModelDetails = async (item) => {
-    let modelID = item?.user_id;
-    var body = {
-      user_id: modelID,
-    };
-    let res = await dispatch(getUserDetail(body));
-    if (res?.status == 200) {
-      navigation?.navigate(routeName?.MODEL_PROFILE, {
-        modelData: res?.results,
-      });
-    }
+    const modelID = item?.[1]?.userInfo?.user_id;
+    if (!modelID) return;
+    // Your dispatch logic here...
+    console.log("Fetching model details for user_id:", modelID);
   };
 
-  const deleteChat = async () => {
-    const userChatsRef = doc(db, "userChats", currentUser.uid);
-    const chatDocRef = doc(db, "chats", chatId);
+  const sortedChats = Object.entries(displayChats)
+    .filter(([, chat]) => chat?.lastMessage)
+    .sort((a, b) => (b[1]?.date?.seconds || 0) - (a[1]?.date?.seconds || 0));
 
-    try {
-      setLoading(true);
-      const chatDoc = await getDoc(chatDocRef);
-      const chatData = chatDoc.data();
-      const messages = chatData?.messages || [];
-      const updatedMessages = messages.map((message) => {
-        return {
-          ...message,
-          deletedFor: message.deletedFor
-            ? [...message.deletedFor, currentUser.uid]
-            : [currentUser.uid],
-        };
-      });
-      await updateDoc(chatDocRef, {
-        messages: updatedMessages,
-      });
-
-      await updateDoc(userChatsRef, {
-        [chatId]: deleteField(),
-      });
-
-      console.log("Chat with user", chatId, "successfully deleted!");
-      const updatedChatsDoc = await getDoc(userChatsRef);
-      if (updatedChatsDoc.exists()) {
-        const updatedChats = updatedChatsDoc?.data();
-        console.log("updatedChatsupdatedChats----", updatedChats);
-        setChatList(updatedChats || []);
-        dispatch({ type: "SWITCH_USER_NULL", payload: null });
-      } else {
-        setChatList([]);
-      }
-      setLoading(false);
-      setSelectedItems([]);
-    } catch (error) {
-      console.error("Error removing chat:", error);
-    }
-  };
   return (
     <>
       <Header
-        text={"Inbox"}
+        text="Inbox"
         navigation={navigation}
         inbox={true}
         icon={
-          selectedItems?.length != 0 ? (
+          selectedItems.length > 0 ? (
             <View
               style={{
-                ...Styles?.flexRow,
+                flexDirection: "row",
                 alignSelf: "flex-end",
                 width: "40%",
+                justifyContent: "flex-end",
               }}
             >
-              <TouchableOpacity onPress={() => handleDeleteChat()}>
+              <TouchableOpacity onPress={handleDeleteChat} disabled={loading}>
                 <MaterialCommunityIcons
                   name="delete-outline"
                   size={30}
-                  color={Colors?.red}
+                  color={Colors.red}
                 />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setSelectedItems([])}>
-                <Entypo name="cross" size={32} color={Colors?.themeColor} />
+                <Entypo name="cross" size={32} color={Colors.themeColor} />
               </TouchableOpacity>
             </View>
           ) : null
         }
       />
+
       <ScrollView>
         <Searchbar
-          placeholder="Search..."
+          placeholder="Search chats..."
           onChangeText={onChangeSearch}
           value={searchQuery}
-          loading={true}
           style={{
             borderRadius: 15,
             marginHorizontal: 10,
             marginVertical: 20,
-            // padding: 5,
           }}
         />
-        {chatList?.length != 0 ? (
-          Object.entries(chatList)
-            ?.sort((a, b) => b[1].date - a[1].date)
-            .map((item) => {
-              const userInfo = item[1]?.userInfo;
-              const isTyping = typingStatus[userInfo?.uid];
-              let date = item[1]?.date;
-              const seconds = date?.seconds ?? 0;
-              const nanoseconds = date?.nanoseconds ?? 0;
-              const milliseconds = new Date(
-                seconds * 1000 + nanoseconds / 1000000
-              ).toISOString();
 
-              console.log(
-                "itemitem----------",
-                userInfo?.displayName,
-                userInfo?.uid
-              );
+        {sortedChats.length > 0 ? (
+          sortedChats.map((item) => {
+            const chatData = item[1];
+            const userInfo = chatData.userInfo || {};
+            const isTyping = typingStatus[userInfo.uid] || false;
+            const unread = chatData.unreadCount || 0;
 
-              if (!item[1]?.lastMessage) {
-                return null;
-              }
-              return (
-                <>
-                  <TouchableOpacity
-                    // onPress={() => handleSingleChat(item)}
-                    onPress={() =>
-                      selectedItems?.length != 0 ||
-                      selectedItems.includes(item[1]?.userInfo?.uid)
-                        ? handleSelectionMultiple(item)
-                        : handleSingleChat(item)
+            const timestamp = chatData.date;
+            const msgTime = timestamp?.seconds
+              ? new Date(timestamp.seconds * 1000).toISOString()
+              : null;
+
+            // Skip if no last message (already filtered but extra check)
+            if (!chatData.lastMessage) return null;
+
+            return (
+              <TouchableOpacity
+                key={item[0]}
+                onPress={() =>
+                  selectedItems.length > 0
+                    ? handleSelectionMultiple(item)
+                    : handleSingleChat(item)
+                }
+                onLongPress={() =>
+                  selectedItems.length === 0 && handleSelectionMultiple(item)
+                }
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginHorizontal: 10,
+                  paddingVertical: 12,
+                  backgroundColor: selectedItems.includes(userInfo.uid)
+                    ? Colors.lightThemeColor
+                    : Colors.white,
+                  borderRadius: 12,
+                  marginVertical: 6,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    // Your profile navigation logic
+                    if ([11, 15].includes(userInfo.user_role)) {
+                      getModelDetails(item);
+                    } else if (userInfo.user_role === 12) {
+                      navigation.navigate(routeName.CLIENT_PROFILE, {
+                        userId: userInfo.user_id,
+                      });
+                    } else {
+                      navigation.navigate(routeName.PHOTOGRAPHER_PROFILE, {
+                        userId: userInfo.user_id,
+                      });
                     }
-                    onLongPress={() =>
-                      selectedItems?.length != 0
-                        ? null
-                        : handleSelectionMultiple(item)
-                    }
-                    key={item[0]}
-                    style={{
-                      ...Styles?.container,
-                      ...Styles?.flexRow,
-                      marginHorizontal: 10,
-                      width: "95%",
-                      // padding: 20,
-                      backgroundColor: selectedItems.includes(
-                        item[1]?.userInfo?.uid
-                      )
-                        ? Colors?.lightThemeColor
-                        : Colors?.white,
-                      marginTop: 0,
-                      marginVertical: 10,
-                    }}
-                  >
-                    <TouchableOpacity
-                      onPress={() =>
-                        item?.user_role == 11 || item?.user_role == 15
-                          ? getModelDetails(item)
-                          : item?.user_role == 12
-                          ? navigation?.navigate(routeName?.CLIENT_PROFILE, {
-                              userId: item?.user_id,
-                            })
-                          : navigation?.navigate(
-                              routeName?.PHOTOGRAPHER_PROFILE,
-                              {
-                                userId: item?.user_id,
-                              }
-                            )
-                      }
-                    >
-                      {userInfo?.photoURL ? (
-                        <Image
-                          source={{ uri: userInfo?.photoURL }}
-                          style={{
-                            height: dimensionheight(6),
-                            width: dimensionheight(6),
-                            borderRadius: 100,
-                            borderWidth: 2,
-                            borderColor: Colors?.lightThemeColor,
-                          }}
-                        />
-                      ) : (
-                        <FontAwesome
-                          name="user-circle-o"
-                          size={50}
-                          color={Colors?.gredient}
-                        />
-                      )}
-                    </TouchableOpacity>
-                    {/* <FontAwesome
-                  name="user-circle-o"
-                  size={50}
-                  color={Colors?.gredient}
-                /> */}
-
-                    <View
+                  }}
+                >
+                  {userInfo.photoURL ? (
+                    <Image
+                      source={{ uri: userInfo.photoURL }}
                       style={{
-                        width:
-                          item?.[1]?.unreadCount > 0
-                            ? dimensionWidth("35%")
-                            : dimensionWidth("45%"),
-                      }}
-                    >
-                      <TextComponent
-                        text={
-                          item?.pause_status == 1 ||
-                          item?.delete_account_status == 1 ||
-                          item?.user_block_status
-                            ? "User"
-                            : userInfo?.displayName
-                        }
-                        size={Sizes?.l}
-                        numberOfLines={1}
-                      />
-                      <TextComponent
-                        text={
-                          isTyping ? "typing" : item?.[1]?.lastMessage?.text
-                        }
-                        size={Sizes?.s}
-                        color={
-                          isTyping
-                            ? Colors?.green
-                            : item?.[1]?.unreadCount > 0
-                            ? Colors?.black
-                            : Colors?.darkgrey
-                        }
-                        numberOfLines={1}
-                      />
-                    </View>
-
-                    <TextComponent
-                      text={timeSince(milliseconds)}
-                      size={Sizes?.xs}
-                      color={Colors?.darkgrey}
-                      fontWeight="400"
-                      style={{
-                        width: 80,
-                        textAlign: "right",
+                        height: dimensionheight(6),
+                        width: dimensionheight(6),
+                        borderRadius: 50,
+                        borderWidth: 2,
+                        borderColor: Colors.lightThemeColor,
+                        marginRight: 12,
                       }}
                     />
-                    {item?.[1]?.unreadCount > 0 && (
-                      <View
-                        style={{
-                          backgroundColor: Colors?.black,
-                          paddingVertical: 3,
-                          paddingHorizontal: 8,
-                          borderRadius: 100,
-                        }}
-                      >
-                        <TextComponent
-                          text={item?.[1]?.unreadCount}
-                          size={Sizes?.xs}
-                          color={Colors?.white}
-                        />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  {/* <Swipeable
-                ref={swipeRef}
-                // onSwipeableWillOpen={() =>}
-                style={{ marginVertical: 20 }}
-                // onSwipeableOpen={() => {
-                //   setSwiperHide(true);
-                //   // handleSwipeItem(item, true);
-                //   // setSwipedItems(item);
-                // }}
-                // renderRightActions={
-                //   () => (
-                //     // swiperHide ? (
-                //     <TouchableOpacity
-                //       onPress={() => handleDeleteChat(item)}
-                //       style={{
-                //         alignContent: "center",
-                //         justifyContent: "center",
-                //         width: "30%",
-                //       }}
-                //     >
-                //       <MaterialCommunityIcons
-                //         name="delete"
-                //         size={35}
-                //         color={Colors?.red}
-                //         style={{
-                //           alignSelf: "flex-end",
-                //           justifyContent: "center",
-                //           paddingHorizontal: 10,
-                //         }}
-                //       />
-                //     </TouchableOpacity>
-                //   )
-                //   // ) : null
-                // }
-                // onSwipeableWillOpen={closeSwipeable}
-              >
-              
-              </Swipeable> */}
-                </>
-              );
-            })
+                  ) : (
+                    <FontAwesome
+                      name="user-circle-o"
+                      size={dimensionheight(6)}
+                      color={Colors.gredient}
+                      style={{ marginRight: 12 }}
+                    />
+                  )}
+                </TouchableOpacity>
+
+                <View style={{ flex: 1 }}>
+                  <TextComponent
+                    text={
+                      chatData.pause_status === 1 ||
+                      chatData.delete_account_status === 1 ||
+                      chatData.user_block_status
+                        ? "User"
+                        : userInfo.displayName || "Unknown"
+                    }
+                    size={Sizes.l}
+                    numberOfLines={1}
+                  />
+                  <TextComponent
+                    text={
+                      isTyping ? "typing..." : chatData.lastMessage?.text || ""
+                    }
+                    size={Sizes.s}
+                    color={
+                      isTyping
+                        ? Colors.green
+                        : unread > 0
+                        ? Colors.black
+                        : Colors.darkgrey
+                    }
+                    numberOfLines={1}
+                  />
+                </View>
+
+                <View
+                  style={{
+                    alignItems: "flex-end",
+                    minWidth: 80,
+                    right: 10,
+                  }}
+                >
+                  {msgTime && (
+                    <TextComponent
+                      text={timeSince(msgTime)}
+                      size={Sizes.xs}
+                      color={Colors.darkgrey}
+                    />
+                  )}
+                  {unread > 0 && (
+                    <View
+                      style={{
+                        backgroundColor: Colors.black,
+                        borderRadius: 12,
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        marginTop: 4,
+                      }}
+                    >
+                      <TextComponent
+                        text={unread}
+                        size={Sizes.xs}
+                        color={Colors.white}
+                      />
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })
         ) : emptyList ? (
-          <View style={{ marginTop: 250 }}>
-            <Text style={{ textAlign: "center" }}>No Chat Found</Text>
+          <View style={{ marginTop: 200, alignItems: "center" }}>
+            <Text style={{ fontSize: 16, color: Colors.darkgrey }}>
+              No chats found
+            </Text>
           </View>
         ) : null}
-        <View style={{ height: 30 }} />
+
+        <View style={{ height: 60 }} />
       </ScrollView>
     </>
   );
-});
-
+};
 {
   /* {chatList?.length == 0 || item?.sender?.id == item?.receiver?.id ? (
         <View

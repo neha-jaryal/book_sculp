@@ -755,7 +755,7 @@ export const Jobs = ({ route, navigation }) => {
         <FlatList
           ref={flatListRef}
           data={jobsList}
-          contentContainerStyle={{ marginVertical: 10, paddingBottom: 20 }}
+          contentContainerStyle={{ marginVertical: 10, paddingBottom: 100 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }

@@ -2,6 +2,186 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+
+	<key>CFBundleDisplayName</key>
+	<string>Book Sculp</string>
+
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+
+	<key>CFBundleSignature</key>
+	<string>????</string>
+
+	<!-- URL Schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Google -->
+				<!-- <string>com.googleusercontent.apps.646055473905-qos5st7u0a5knrnlahspdafvpv0a9076</string> -->
+      <string>com.googleusercontent.apps.646055473905-en6gji4jsd6dj80pf4oguldrh8qevm</string>
+				<!-- Facebook -->
+				<string>fb2253540844932380</string>
+
+				<!-- Custom App Scheme -->
+				<string>com.sculpAgency</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Google -->
+	<key>GOOGLE_APP_ID</key>
+	<string>1:646055473905:ios:1ba9d3e06bb595b277ef50</string>
+
+	<!-- Facebook -->
+	<key>FacebookAppID</key>
+	<string>2253540844932380</string>
+
+	<key>FacebookDisplayName</key>
+	<string>Book-Sculp</string>
+
+	<key>FacebookAutoInitEnabled</key>
+	<true/>
+
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<true/>
+
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<true/>
+
+	<!-- Permissions -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This app uses tracking to provide a personalized experience and relevant ads.</string>
+
+	<key>NSCameraUsageDescription</key>
+	<string>Allow camera access to take profile photos</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow photo library access to select profile images</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allow saving edited photos to library</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Allow location access when needed</string>
+
+	<!-- App Transport Security -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+
+	<!-- Required Schemes -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>com.google</string>
+		<string>googlechrome</string>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+		<string>fbauth2</string>
+		<string>fbshareextension</string>
+	</array>
+
+	<!-- Background Tasks -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.sculpAgency.backgroundtaskidentifier</string>
+	</array>
+
+	<!-- React Native New Architecture -->
+	<key>RCTNewArchEnabled</key>
+	<true/>
+
+	<!-- Background Modes -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+
+	<!-- Fonts -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>Fontisto.ttf</string>
+		<string>Octicons.ttf</string>
+		<string>Feather.ttf</string>
+		<string>FontAwesome6_Regular.ttf</string>
+		<string>Entypo.ttf</string>
+		<string>FontAwesome5_Brands.ttf</string>
+		<string>MaterialCommunityIcons.ttf</string>
+		<string>AntDesign.ttf</string>
+		<string>Foundation.ttf</string>
+		<string>Ionicons.ttf</string>
+		<string>FontAwesome5_Solid.ttf</string>
+		<string>FontAwesome5_Regular.ttf</string>
+		<string>FontAwesome.ttf</string>
+		<string>Zocial.ttf</string>
+		<string>EvilIcons.ttf</string>
+		<string>FontAwesome6_Solid.ttf</string>
+		<string>FontAwesome6_Brands.ttf</string>
+		<string>SimpleLineIcons.ttf</string>
+		<string>MaterialIcons.ttf</string>
+	</array>
+
+</dict>
+</plist>
+
+
+
+
+<!-- <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -22,6 +202,19 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>reversed client ID</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.646055473905-qos5t7u0aknnrlhsdfvpv0a9076</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>GOOGLE_APP_ID</key>
@@ -38,33 +231,13 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Allow camera access to take profile photos</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<string></string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow saving edited photos to library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow photo library access to select profile images</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-		<string>fetch</string>
-		<string>processing</string>
-	</array>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>arm64</string>
-	</array>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Fontisto.ttf</string>
@@ -87,5 +260,25 @@
 		<string>FontAwesome6_Brands.ttf</string>
 		<string>MaterialIcons.ttf</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
-</plist>
+</plist> -->

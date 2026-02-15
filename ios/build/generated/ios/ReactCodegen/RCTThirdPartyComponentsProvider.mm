@@ -25,6 +25,11 @@
 		@"RNGoogleSignInButton": NSClassFromString(@"RNGoogleSignInButtonComponentView"), // @react-native-google-signin/google-signin
 		@"LottieAnimationView": NSClassFromString(@"LottieAnimationViewComponentView"), // lottie-react-native
 		@"RNGestureHandlerButton": NSClassFromString(@"RNGestureHandlerButtonComponentView"), // react-native-gesture-handler
+		@"KeyboardControllerView": NSClassFromString(@"KeyboardControllerView"), // react-native-keyboard-controller
+		@"KeyboardGestureArea": NSClassFromString(@"KeyboardGestureArea"), // react-native-keyboard-controller
+		@"OverKeyboardView": NSClassFromString(@"OverKeyboardView"), // react-native-keyboard-controller
+		@"KeyboardBackgroundView": NSClassFromString(@"KeyboardBackgroundView"), // react-native-keyboard-controller
+		@"KeyboardExtender": NSClassFromString(@"KeyboardExtender"), // react-native-keyboard-controller
 		@"RNCSafeAreaProvider": NSClassFromString(@"RNCSafeAreaProviderComponentView"), // react-native-safe-area-context
 		@"RNCSafeAreaView": NSClassFromString(@"RNCSafeAreaViewComponentView"), // react-native-safe-area-context
 		@"RNCWebView": NSClassFromString(@"RNCWebView"), // react-native-webview

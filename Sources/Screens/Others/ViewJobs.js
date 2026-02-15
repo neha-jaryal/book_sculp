@@ -440,7 +440,7 @@ export const ViewJobs = ({ route, navigation }) => {
     <>
       <Header text={"Job Details"} navigation={navigation} />
       <Loader loading={other?.isLoading} />
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={Styles?.container}>
           <View style={Styles?.flexRow}>
             <TextComponent
