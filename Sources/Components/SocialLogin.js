@@ -65,30 +65,22 @@ const SocialLogin = (props) => {
       }
     }
   };
-  
+
   useEffect(() => {
     GoogleSignin.configure({
       webClientId:
-        "646055473905-amb2kn64mur11l5t0o76et9k9btniva5.apps.googleusercontent.com",
-      offlineAccess: true,
+        "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+      iosClientId:
+        "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+      scopes: [
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/user.gender.read",
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/user.birthday.read",
+        "openid",
+      ],
     });
   }, []);
-
-  // useEffect(() => {
-  //   GoogleSignin.configure({
-  //     webClientId:
-  //       "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
-  //     iosClientId:
-  //       "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
-  //     scopes: [
-  //       "https://www.googleapis.com/auth/userinfo.email",
-  //       "https://www.googleapis.com/auth/user.gender.read",
-  //       "https://www.googleapis.com/auth/userinfo.profile",
-  //       "https://www.googleapis.com/auth/user.birthday.read",
-  //       "openid",
-  //     ],
-  //   });
-  // }, []);
 
   const handleFirebaseLogin = async (email) => {
     dispatch(navigatorStatus(routeName?.DRAWER, "", false));

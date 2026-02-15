@@ -45,8 +45,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<!-- Google -->
-				<!-- <string>com.googleusercontent.apps.646055473905-qos5st7u0a5knrnlahspdafvpv0a9076</string> -->
-      <string>com.googleusercontent.apps.646055473905-en6gji4jsd6dj80pf4oguldrh8qevm</string>
+				<string>com.googleusercontent.apps.646055473905-qos5st7u0a5knrnlahspdafvpv0a9076</string>
 				<!-- Facebook -->
 				<string>fb2253540844932380</string>
 
