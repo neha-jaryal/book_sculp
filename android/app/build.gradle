@@ -1,33 +1,47 @@
-// Top-level build file (android/build.gradle)
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
 
-buildscript {
-    ext {
-        buildToolsVersion = "35.0.0"
-        minSdkVersion = 21
-        compileSdkVersion = 35
-        targetSdkVersion = 35
-        // ndkVersion can stay in app/build.gradle
+android {
+    namespace "com.book_sculp"
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        applicationId "com.book_sculp"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
     }
-    repositories {
-        google()
-        mavenCentral()
+
+    // Explicitly force Java + Kotlin to JVM 17 (helps override any inherited defaults)
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.5.0")  // or 8.6+ if your Android Studio supports
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
-        // No need for classpath("com.facebook.react:react-native-gradle-plugin") — handled by includeBuild
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    // Optional: Also use toolchain here for consistency
+    kotlin {
+        jvmToolchain(17)
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
     }
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url "$rootDir/../node_modules/react-native/android" }  // RN AARs/prefabs
-        maven { url 'https://www.jitpack.io' }
-    }
-}
+dependencies {
+    // The React Native Android dependency
+    implementation("com.facebook.react:react-android")
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+    // If you use any other direct dependencies, add them here
+    // debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
+    // etc.
 }

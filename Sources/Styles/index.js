@@ -55,7 +55,7 @@ export const Styles = {
     paddingHorizontal: 10,
     shadowColor: Colors?.black,
     elevation: 5,
-    paddingTop: Platform?.OS == "android" ? 20 : 40,
+    paddingTop: Platform?.OS == "android" ? 20 : 50,
     shadowOpacity: 0.2,
   },
   bannerCard: {

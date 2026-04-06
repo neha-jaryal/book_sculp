@@ -48,7 +48,6 @@ export const Settings = ({ navigation }) => {
     let paymentStatus = await getData(storageKey?.PAYMENT_STATUS);
     setPaymentStatus(JSON.parse(paymentStatus));
   };
-  console.log("paymentStatuspaymentStatus-------", paymentStatus);
 
   const freelancerListItems = [
     {
@@ -358,7 +357,7 @@ export const Settings = ({ navigation }) => {
   return (
     <>
       <Header text={"Settings"} navigation={navigation} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={{ ...Styles?.container }}>
           {listItems?.length != 0 &&
             listItems?.map((item, index) => {

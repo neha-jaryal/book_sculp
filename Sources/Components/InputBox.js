@@ -19,19 +19,19 @@ import {
   dimensionheight,
 } from "../Constants";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import CountryPicker from "react-native-country-codes-picker"; // ← NEW PACKAGE
+import { CountryPicker } from "react-native-country-codes-picker";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import Entypo from "react-native-vector-icons/Entypo";
 import moment from "moment";
-import { InputField } from "./InputField";
-import { ErrorMessage } from "./ErrorMessage";
-import { TextComponent } from "./TextComponent";
 import Modal from "react-native-modal";
 import { Styles } from "../Styles";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { Button } from "./Button";
 import { convertTime } from "../Utility";
 import { useFocusEffect } from "@react-navigation/native";
+import { InputField } from "./InputField";
+import { ErrorMessage } from "./ErrorMessage";
+import { TextComponent } from "./TextComponent";
+import { Button } from "./Button";
 
 export const InputBox = ({ ...props }) => {
   const {
@@ -237,6 +237,7 @@ export const InputBox = ({ ...props }) => {
     setValue(date);
   };
 
+  console.log("selectedCountry-----", callingCode?.length);
   return (
     <View style={{ ...style }}>
       {type === "phone" ? (
@@ -249,7 +250,6 @@ export const InputBox = ({ ...props }) => {
           >
             {!hideVerify && (
               <>
-                {/* Replaced old CountryPicker with new one */}
                 <TouchableOpacity
                   onPress={() => setShowCountryPicker(true)}
                   style={{
@@ -260,25 +260,31 @@ export const InputBox = ({ ...props }) => {
                     zIndex: 1,
                   }}
                 >
-                  {selectedCountry?.flag && (
-                    <Text style={{ fontSize: 20, marginRight: 4 }}>
-                      {selectedCountry.flag}
-                    </Text>
+                  {/* Flag (only show if selected) */}
+                  {selectedCountry?.flag ? (
+                    <Text style={{ fontSize: 22 }}>{selectedCountry.flag}</Text>
+                  ) : (
+                    // Optional: show a placeholder icon or default flag
+                    <Text style={{ fontSize: 22 }}>🌍</Text>
                   )}
-                  <Text style={{ fontSize: 16 }}>
-                    +{callingCode || selectedCountry?.dial_code || ""}
+
+                  {/* Calling code display */}
+                  <Text style={{ fontSize: 16, fontWeight: "500" }}>
+                    +{callingCode}
                   </Text>
                 </TouchableOpacity>
 
-                {/* Show the picker modal when button pressed */}
                 <CountryPicker
                   show={showCountryPicker}
+                  lang="en"
+                  theme={Styles?.container}
                   pickerButtonOnPress={(item) => {
+                    console.log("Selected:", item);
                     setSelectedCountry(item);
-                    setCallingCode(item.dial_code.replace("+", "")); // remove + sign if needed
+                    const cleanCode = item.dial_code.replace("+", "");
+                    setCallingCode(cleanCode);
                     setShowCountryPicker(false);
                   }}
-                  // You can add more props like lang='en', popularCountries={['us', 'in']}, etc.
                 />
               </>
             )}
@@ -290,7 +296,14 @@ export const InputBox = ({ ...props }) => {
               value={`${value}`}
               keyboardType={"numeric"}
               icon={hideVerify ? (icon ? icon : Images?.phonIcon) : null}
-              style={{ paddingLeft: hideVerify ? 15 : 100, zIndex: -1 }}
+              style={{
+                paddingLeft: hideVerify
+                  ? 15
+                  : callingCode?.length < 3
+                  ? 70
+                  : 90,
+                zIndex: -1,
+              }}
             />
 
             {!hideVerify && (

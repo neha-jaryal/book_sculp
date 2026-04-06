@@ -23,7 +23,7 @@ export const TermsCondition = (props) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         <Lotties
           source={JSONS?.termsOfServiceJSON}
-          style={{ width: "100%", marginTop: 10 }}
+          style={{ width: "100%", marginTop: 10, height: 150 }}
         />
         <TextComponent
           text={`Introduction`}

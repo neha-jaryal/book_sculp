@@ -41,6 +41,7 @@ export const AuthContextProvider = ({ children }) => {
   useEffect(() => {
     // Only listen to native Firebase Auth
     const unsubscribe = auth().onAuthStateChanged((user) => {
+      console.log('useruseruser0000', user)
       if (user) {
         console.log("User logged in:", user.email);
         setCurrentUser(user);

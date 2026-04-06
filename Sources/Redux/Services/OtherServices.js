@@ -1394,7 +1394,7 @@ export const getPortfolioDetails = (body) => async (dispatch) => {
       body,
       true
     );
-    console.log("getPortfolioDetails response--", response);
+    console.log("getPortfolioDetails response--", response?.results[0]);
     if (response.status == 200) {
       dispatch(getPortfolioDetailsSuccess(false));
       return response;

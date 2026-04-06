@@ -285,13 +285,14 @@ export const Inbox = ({ navigation }) => {
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  marginHorizontal: 10,
-                  paddingVertical: 12,
+                  marginHorizontal: 15,
+                  padding: 10,
                   backgroundColor: selectedItems.includes(userInfo.uid)
                     ? Colors.lightThemeColor
                     : Colors.white,
                   borderRadius: 12,
                   marginVertical: 6,
+
                 }}
               >
                 <TouchableOpacity

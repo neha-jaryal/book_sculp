@@ -68,62 +68,146 @@ export const NotificationCard = (props) => {
       <TouchableOpacity
         onPress={() => handleNotifyStatus(cardData)}
         style={{
-          ...Styles?.container,
-          borderRadius: 5,
-          marginTop: 10,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          backgroundColor:
+            cardData?.notify_status === "true" ? "#F8F9FB" : "#EAF4FF",
+          padding: 15,
+          marginHorizontal: 15,
+          marginVertical: 6,
+          borderRadius: 12,
+
+          // Shadow (iOS)
+          shadowColor: "#000",
+          shadowOpacity: 0.05,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 2 },
+
+          // Elevation (Android)
+          elevation: 2,
+        }}
+      >
+        {/* LEFT SIDE */}
+        <View style={{ flexDirection: "row", flex: 1 }}>
+          {/* Icon Circle */}
+          <View
+            style={{
+              height: 42,
+              width: 42,
+              borderRadius: 21,
+              backgroundColor: "#FFFFFF",
+              justifyContent: "center",
+              alignItems: "center",
+              marginRight: 12,
+            }}
+          >
+            <FontAwesome
+              name={cardData?.notify_status === "true" ? "bell-o" : "bell"}
+              size={18}
+              color="#2979FF"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              numberOfLines={2}
+              style={{
+                fontSize: 14,
+                color: "#333",
+                lineHeight: 20,
+              }}
+            >
+              {cardData?.notify_msg}
+            </Text>
+
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#888",
+                marginTop: 4,
+              }}
+            >
+              {timeSince(cardData?.date)}
+            </Text>
+          </View>
+        </View>
+
+        {cardData?.notify_status === "false" && (
+          <View
+            style={{
+              height: 10,
+              width: 10,
+              borderRadius: 5,
+              backgroundColor: "#2979FF",
+              marginLeft: 8,
+              marginTop: 4,
+            }}
+          />
+        )}
+      </TouchableOpacity>
+      {/* <TouchableOpacity
+        onPress={() => handleNotifyStatus(cardData)}
+        style={{
+          // ...Styles?.container,
+          // borderRadius: 5,
+          // marginTop: 10,
           ...Styles?.flexRow,
-          marginHorizontal: 0,
+          // alignItems: "flex-start",
+          // marginHorizontal: 10,
           backgroundColor:
             cardData?.notify_status == "true"
               ? Colors?.white
-              : Colors?.lightPink,
+              : Colors?.lightBlue,
+          padding: 20,
         }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-          }}
-        >
-          {cardData?.notify_status == "true" ? (
-            <Foundation
-              name="mail"
-              size={28}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              padding: 6,
+              backgroundColor: Colors?.white,
+              borderRadius: 100,
+            }}
+          >
+            <FontAwesome
+              name={cardData?.notify_status == "true" ? "bell-o" : "bell"}
+              size={20}
               color={Colors?.blue}
               // style={{ alignSelf: "flex-start" }}
             />
-          ) : (
-            <MaterialIcons
-              name="mark-email-unread"
-              size={28}
-              color={Colors?.pink}
-              // style={{ alignSelf: "flex-start" }}
-            />
-          )}
-
+          </View>
           <TextComponent
             text={cardData?.notify_msg}
             size={Sizes?.s}
             fontWeight="400"
-            // numberOfLines={expendView ? 0 : 2}
+            numberOfLines={expendView ? 0 : 2}
             style={{
               paddingLeft: 10,
-              width: 245,
+              width: 280,
               lineHeight: 20,
               letterSpacing: 0.1,
             }}
           />
-          <TouchableOpacity
-            // onPress={() => setExpendView(!expendView)}
-            style={{ alignItems: "flex-end" }}
-          >
-            <TextComponent
-              text={timeSince(cardData?.date)}
-              size={Sizes?.xs}
-              fontWeight="400"
-            />
-          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+
+        <TouchableOpacity
+          // onPress={() => setExpendView(!expendView)}
+          style={{ alignItems: "flex-end" }}
+        >
+          {cardData?.notify_status == "false" && (
+            <TextComponent
+              text={"●"}
+              size={Sizes?.xxs}
+              style={{ marginBottom: 10 }}
+            />
+          )}
+          <TextComponent
+            text={timeSince(cardData?.date)}
+            size={Sizes?.xs}
+            fontWeight="400"
+          />
+        </TouchableOpacity>
+      </TouchableOpacity> */}
     </>
   );
 };

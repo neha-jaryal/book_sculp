@@ -14,6 +14,7 @@ export const PrivacyPolicy = ({ navigation }) => {
           style={{
             width: 250, 
             alignSelf: "center",
+            height: 150
           }}
         />
         <TextComponent

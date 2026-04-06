@@ -592,12 +592,23 @@ export const ManageAccount = ({ navigation }) => {
                 </TouchableOpacity> */}
               </>
             ) : tab == 2 ? (
-              <View style={{ paddingVertical: 15,   }}>
-                {/* <Lotties
+              <View style={{ paddingVertical: 15 }}>
+                <Lotties
                   source={JSONS?.passordJSON}
-                  style={{ width: "100%", marginTop: -15, marginLeft: 10 }}
-                /> */}
-                <View style={{ marginTop: 10, paddingHorizontal: 20 }}>
+                  style={{
+                    width: "100%",
+                    marginTop: -15,
+                    marginLeft: 10,
+                    height: 150,
+                  }}
+                />
+                <View
+                  style={{
+                    marginTop: 10,
+                    paddingHorizontal: 20,
+                    marginTop: -50,
+                  }}
+                >
                   <InputBox
                     type="password"
                     value={password.trim()}

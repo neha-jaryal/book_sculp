@@ -56,7 +56,7 @@ const imageSize = screenWidth / numColumns - 40;
 
 export const ModelProfile = ({ route, navigation }) => {
   const dispatching = useDispatch();
-  const { dispatch: chatDispatch } = useContext(ChatContext);
+  const { dispatch } = useContext(ChatContext);
   const handleMessage = useHandleMessage();
 
   const other = useSelector((state) => state?.otherReducer);
@@ -81,7 +81,9 @@ export const ModelProfile = ({ route, navigation }) => {
   const [showMoreProfessional, setShowMoreProfessional] = useState(false);
   const [showMorePersonal, setShowMorePersonal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-
+  const [currentUserId, setCurrentUserId] = useState(
+    modelData?.user_data?.user_id || userId
+  );
   const bottomSheetRef = useRef(null);
   const snapPoints = useMemo(() => ["60%", "90%"], []);
 
@@ -292,7 +294,6 @@ export const ModelProfile = ({ route, navigation }) => {
     setSelectedIndex(index);
     setImagesModal(true);
   };
-
 
   const modelDetail = [
     {

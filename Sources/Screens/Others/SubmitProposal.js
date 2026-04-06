@@ -12,6 +12,7 @@ import { Colors, Images, Sizes } from "../../Constants";
 import { Styles } from "../../Styles";
 import { routeName } from "../../Utility/routeName";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
 // import * as ImagePicker from "react-native-image-picker";
 import ImagePicker from "react-native-image-crop-picker";
 import { useFocusEffect } from "@react-navigation/native";
@@ -134,17 +135,17 @@ export const SubmitProposal = ({ route, navigation }) => {
           ? jobDetail?.post_meta_details?.usage_fee
           : 0,
       );
-    // console.log(
-    //   "amountamountamount------",
-    //   "durationAmount",
-    //   durationAmount,
-    //   "totalDiemPrice",
-    //   totalDiemPrice,
-    //   "amount",
-    //   amount,
-    //   "adminShare",
-    //   adminShare
-    // );
+    console.log(
+      "amountamountamount------",
+      "durationAmount",
+      durationAmount,
+      "totalDiemPrice",
+      jobDetail?.post_meta_details,
+      "amount",
+      amount,
+      "adminShare",
+      adminShare,
+    );
     setProjectCost({
       ...projectCost,
       grandTotal: amount,
@@ -154,7 +155,7 @@ export const SubmitProposal = ({ route, navigation }) => {
     let fee = amount * (adminFee / 100);
     setServiceFee(fee);
   };
-  // console.log("serviceFee------", serviceFee);
+  console.log("totalDiemPrice------", projectCost?.totalDiemPrice);
   const SubmitProposal = async () => {
     setError(true);
     if (!coverLatter) {
@@ -228,9 +229,11 @@ export const SubmitProposal = ({ route, navigation }) => {
             <View style={Styles?.separator} />
 
             <View style={styling?.employeeDetailView}>
-              <Image
-                source={Images?.jobTypeIcon}
-                style={styling?.imageIconView}
+              <FontAwesome5
+                name="business-time"
+                size={18}
+                color={Colors?.darkgrey}
+                style={{ marginHorizontal: 10 }}
               />
               <TextComponent
                 text={`Job Type : ${jobDetail?.fw_option[0]?.job_option}`}
@@ -238,32 +241,32 @@ export const SubmitProposal = ({ route, navigation }) => {
                 fontWeight="400"
                 color={Colors?.black}
               />
-              <Image
-                source={Images?.watchIcon}
-                style={styling?.imageIconView}
-              />
-              <TextComponent
-                text={jobDetail?.post_meta_details?._project_type}
-                size={Sizes?.s}
-                fontWeight="400"
-                color={Colors?.black}
-              />
+              {jobDetail?.post_meta_details?._project_type && (
+                <>
+                  <FontAwesome5
+                    name="clock"
+                    size={18}
+                    color={Colors?.darkgrey}
+                    style={{ marginHorizontal: 10 }}
+                  />
+                  <TextComponent
+                    text={jobDetail?.post_meta_details?._project_type}
+                    size={Sizes?.s}
+                    fontWeight="400"
+                    color={Colors?.black}
+                  />
+                </>
+              )}
             </View>
-
             <View style={styling?.employeeDetailView}>
-              <Image
-                source={Images?.employeeIcon}
-                style={styling?.imageIconView}
+              <FontAwesome5
+                name="project-diagram"
+                size={18}
+                color={Colors?.darkgrey}
+                style={{ marginHorizontal: 10 }}
               />
               <TextComponent
                 text={jobDetail?.fw_option[0]?.project_level}
-                size={Sizes?.s}
-                fontWeight="400"
-                color={Colors?.black}
-              />
-              <Image source={Images?.flagIcon} style={styling?.imageIconView} />
-              <TextComponent
-                text={`${jobDetail?.post_meta_details?.country}`}
                 size={Sizes?.s}
                 fontWeight="400"
                 color={Colors?.black}
@@ -278,7 +281,11 @@ export const SubmitProposal = ({ route, navigation }) => {
               style={{ padding: 10 }}
             />
             <View
-              style={{ ...Styles?.flexRow, width: "95%", position: "relative" }}
+              style={{
+                ...Styles?.flexRow,
+
+                position: "relative",
+              }}
             >
               <InputBox
                 type="numeric"
@@ -293,10 +300,11 @@ export const SubmitProposal = ({ route, navigation }) => {
                 }}
                 icon={Images?.dollarIcon}
                 keyboardType="numeric"
+                style={{ width: "100%" }}
               />
               <TouchableOpacity
                 onPress={() => setShowDetails(!showDetails)}
-                style={{ position: "absolute", right: 10, top: 12 }}
+                style={{ position: "absolute", right: 25, top: 20 }}
               >
                 <FontAwesome
                   name={showDetails ? "angle-up" : "angle-down"}
@@ -335,11 +343,11 @@ export const SubmitProposal = ({ route, navigation }) => {
                     text={
                       jobDetail?.post_meta_details?._hourly_rate
                         ? "$" +
-                          parseFloat(totalAmount) *
-                            parseFloat(
-                              jobDetail?.post_meta_details?._estimated_hours,
-                            )
-                        : parseFloat(totalAmount)
+                            parseFloat(totalAmount) *
+                              parseFloat(
+                                jobDetail?.post_meta_details?._estimated_hours,
+                              ) || 0
+                        : parseFloat(totalAmount) || 0
                     }
                     size={Sizes?.l}
                     color={Colors?.green}
@@ -359,7 +367,9 @@ export const SubmitProposal = ({ route, navigation }) => {
                   <>
                     <View style={{ marginHorizontal: 10 }}>
                       <TextComponent
-                        text={`+ $${jobDetail?.post_meta_details?.usage_fee}`}
+                        text={`+ $${
+                          jobDetail?.post_meta_details?.usage_fee || 0
+                        }`}
                         size={Sizes?.l}
                         color={Colors?.green}
                       />
@@ -377,7 +387,7 @@ export const SubmitProposal = ({ route, navigation }) => {
 
                 <View style={{ marginHorizontal: 10 }}>
                   <TextComponent
-                    text={`- $${parseFloat(serviceFee)}`}
+                    text={`- $${parseFloat(serviceFee) || 0}`}
                     size={Sizes?.l}
                     color={Colors?.green}
                   />
@@ -395,8 +405,8 @@ export const SubmitProposal = ({ route, navigation }) => {
                 <View style={{ marginHorizontal: 10 }}>
                   <TextComponent
                     text={`$${
-                      parseFloat(projectCost?.grandTotal) -
-                      parseFloat(serviceFee)
+                      (parseFloat(projectCost?.grandTotal) || 0) -
+                      (parseFloat(serviceFee) || 0)
                     }`}
                     size={Sizes?.l}
                     color={Colors?.green}
@@ -415,7 +425,9 @@ export const SubmitProposal = ({ route, navigation }) => {
                 <>
                   <View style={{ marginHorizontal: 10 }}>
                     <TextComponent
-                      text={`+ $${parseFloat(projectCost?.totalDiemPrice)}`}
+                      text={`+ $${
+                        parseFloat(projectCost?.totalDiemPrice) || 0
+                      }`}
                       size={Sizes?.l}
                       color={Colors?.green}
                     />
@@ -437,8 +449,8 @@ export const SubmitProposal = ({ route, navigation }) => {
                     <TextComponent
                       text={`$${
                         parseFloat(projectCost?.grandTotal) -
-                        parseFloat(serviceFee) +
-                        parseFloat(projectCost?.totalDiemPrice)
+                          parseFloat(serviceFee) +
+                          parseFloat(projectCost?.totalDiemPrice) || 0
                       }`}
                       size={Sizes?.l}
                       color={Colors?.green}

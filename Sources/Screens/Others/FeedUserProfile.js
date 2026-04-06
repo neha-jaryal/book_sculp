@@ -1,5 +1,5 @@
 // FeedUserProfile.js
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -35,6 +35,7 @@ import Video from "react-native-video";
 import { getAccountApproval } from "../../Utility";
 import { useHandleMessage } from "../../Utility/FirestoreHelper";
 import { ChatContext } from "../../Context/ChatContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 export const FeedUserProfile = ({ route, navigation }) => {
   const { userId, type } = route?.params || {};
@@ -51,12 +52,30 @@ export const FeedUserProfile = ({ route, navigation }) => {
   const [portfolioList, setPortfolioList] = useState([]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState(false);
 
   useEffect(() => {
     fetchUserData();
     fetchSocialPosts();
     fetchPortfolioPosts();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const getAccountApprovalStatus = async () => {
+        let status = await getData(storageKey?.APPROVAL_STATUS);
+        let accountApproval = JSON?.parse(status);
+        if (isActive) setApprovalStatus(accountApproval);
+      };
+      getAccountApprovalStatus();
+
+      return () => {
+        isActive = false;
+      };
+    }, []),
+  );
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -89,45 +108,47 @@ export const FeedUserProfile = ({ route, navigation }) => {
   };
 
   const toggleFollow = async () => {
-    const approved = await getAccountApproval(true, navigation, auth);
-    if (!approved) return;
+    if (approvalStatus) {
+      const currentUserId = await getData(storageKey.USER_ID);
+      const body = {
+        action: follow ? "unfollow" : "follow",
+        user_id: currentUserId,
+        post_id: userData?.user_data?.profile_id,
+      };
 
-    const currentUserId = await getData(storageKey.USER_ID);
-    const body = {
-      action: follow ? "unfollow" : "follow",
-      user_id: currentUserId,
-      post_id: userData?.user_data?.profile_id,
-    };
-
-    const res = await dispatch(userFollowing(body));
-    if (res?.status === 200) {
-      setFollow(!follow);
-      fetchUserData(); // refresh follower count
+      const res = await dispatch(userFollowing(body));
+      if (res?.status === 200) {
+        setFollow(!follow);
+        fetchUserData(); // refresh follower count
+      }
+    } else {
+      getAccountApproval(true, navigation, auth);
     }
   };
 
   const startChat = async () => {
-    const approved = await getAccountApproval(true, navigation, auth);
-    if (!approved) return;
+    if (approvalStatus) {
+      const profileImage = userData?.profile_image?.[0]?.guid || "";
+      const receiver = {
+        displayName: userData?.user_data?.display_name,
+        uid: userData?.user_data?.firebase_udi,
+        photoURL: profileImage,
+        user_id: userData?.user_data?.user_id,
+      };
 
-    const profileImage = userData?.profile_image?.[0]?.guid || "";
-    const receiver = {
-      displayName: userData?.user_data?.display_name,
-      uid: userData?.user_data?.firebase_udi,
-      photoURL: profileImage,
-      user_id: userData?.user_data?.user_id,
-    };
-
-    chatDispatch({ type: "CHANGE_USER", payload: receiver });
-    handleMessage(
-      userData?.user_data?.user_email,
-      userData?.user_data?.firebase_udi,
-      userData?.user_data?.display_name,
-      () => {}, // no loading setter needed here
-      profileImage,
-      userData?.user_data?.user_id,
-      userData?.user_data?.user_role,
-    );
+      chatDispatch({ type: "CHANGE_USER", payload: receiver });
+      handleMessage(
+        userData?.user_data?.user_email,
+        userData?.user_data?.firebase_udi,
+        userData?.user_data?.display_name,
+        () => {}, // no loading setter needed here
+        profileImage,
+        userData?.user_data?.user_id,
+        userData?.user_data?.user_role,
+      );
+    } else {
+      getAccountApproval(true, navigation, auth);
+    }
   };
 
   const viewFullProfile = async () => {
@@ -139,7 +160,6 @@ export const FeedUserProfile = ({ route, navigation }) => {
       });
     }
   };
-
   return (
     <>
       <Header
@@ -154,7 +174,7 @@ export const FeedUserProfile = ({ route, navigation }) => {
         >
           {/* Profile Header */}
           <View style={styles.profileHeader}>
-            <View style={styles.profileLeft}>
+            <View>
               {userData?.profile_image?.[0]?.guid ? (
                 <FastImage
                   source={{ uri: userData.profile_image[0].guid }}
@@ -183,65 +203,98 @@ export const FeedUserProfile = ({ route, navigation }) => {
             </View>
 
             {/* Stats */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <TextComponent
-                  text={userData?.project_count_details?.portfolio_count || "0"}
-                  size={Sizes.l}
-                />
-                <TextComponent
-                  text="Posts"
-                  size={Sizes.s}
-                  color={Colors.darkgrey}
-                />
+            <View
+              style={{
+                position: "absolute",
+                right: 0,
+              }}
+            >
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <TextComponent
+                    text={
+                      userData?.project_count_details?.portfolio_count || "0"
+                    }
+                    size={Sizes.l}
+                  />
+                  <TextComponent
+                    text="Posts"
+                    size={Sizes.s}
+                    color={Colors.darkgrey}
+                  />
+                </View>
+                <View style={styles.statItem}>
+                  <TextComponent
+                    text={
+                      userData?.project_count_details?.followers_count || "0"
+                    }
+                    size={Sizes.l}
+                  />
+                  <TextComponent
+                    text="Followers"
+                    size={Sizes.s}
+                    color={Colors.darkgrey}
+                  />
+                </View>
+                <View style={styles.statItem}>
+                  <TextComponent
+                    text={
+                      userData?.project_count_details?.following_count || "0"
+                    }
+                    size={Sizes.l}
+                  />
+                  <TextComponent
+                    text="Following"
+                    size={Sizes.s}
+                    color={Colors.darkgrey}
+                  />
+                </View>
               </View>
-              <View style={styles.statItem}>
-                <TextComponent
-                  text={userData?.project_count_details?.followers_count || "0"}
-                  size={Sizes.l}
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  onPress={() => toggleFollow()}
+                  style={styles.optionButton}
+                >
+                  <TextComponent
+                    text={follow ? "Following" : "+ Follow"}
+                    size={Sizes.xs}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => startChat()}
+                  style={styles.optionButton}
+                >
+                  <TextComponent text="Message" size={Sizes.xs} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => viewFullProfile()}
+                  style={styles.optionButton}
+                >
+                  <TextComponent text="View Profile" size={Sizes.xs} />
+                </TouchableOpacity>
+                {/* <Button
+                  title={follow ? "Following" : "+ Follow"}
+                  onPress={toggleFollow}
+                  background={true}
+                  style={{ flex: 1, marginRight: 8 }}
                 />
-                <TextComponent
-                  text="Followers"
-                  size={Sizes.s}
-                  color={Colors.darkgrey}
+                <Button
+                  title="Message"
+                  onPress={startChat}
+                  background={true}
+                  style={{ flex: 1, marginHorizontal: 8 }}
                 />
-              </View>
-              <View style={styles.statItem}>
-                <TextComponent
-                  text={userData?.project_count_details?.following_count || "0"}
-                  size={Sizes.l}
-                />
-                <TextComponent
-                  text="Following"
-                  size={Sizes.s}
-                  color={Colors.darkgrey}
-                />
+                <Button
+                  title="View Profile"
+                  onPress={viewFullProfile}
+                  background={true}
+                  style={{ flex: 1, marginLeft: 8 }}
+                /> */}
               </View>
             </View>
           </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <Button
-              title={follow ? "Following" : "+ Follow"}
-              onPress={toggleFollow}
-              background={true}
-              style={{ flex: 1, marginRight: 8 }}
-            />
-            <Button
-              title="Message"
-              onPress={startChat}
-              background={true}
-              style={{ flex: 1, marginHorizontal: 8 }}
-            />
-            <Button
-              title="View Profile"
-              onPress={viewFullProfile}
-              background={true}
-              style={{ flex: 1, marginLeft: 8 }}
-            />
-          </View>
-
+          {/* <View style={{ ...Styles?.separator, width: "100%" }} /> */}
           {/* Tabs & Content */}
           <Tabs
             leftTitle="Portfolios"
@@ -268,7 +321,6 @@ export const FeedUserProfile = ({ route, navigation }) => {
             renderItem={({ item }) => {
               const media = item?.media?.[0];
               const isVideo = media?.media_type === "video";
-
               return (
                 <TouchableOpacity
                   style={{
@@ -327,7 +379,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   profileLeft: {
     flexDirection: "row",
@@ -335,15 +387,28 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    width: "60%",
-    marginTop: 20,
+    justifyContent: "space-between",
+    marginVertical: 10,
+    // width: "60%",
   },
   statItem: {
     alignItems: "center",
+    paddingHorizontal: 8,
+    // borderRadius: 8,
+    // borderWidth: 1,
+    // borderColor: Colors.darkgrey,
   },
   actionButtons: {
     flexDirection: "row",
-    marginBottom: 24,
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+  },
+  optionButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 15,
+    borderWidth: 0.8,
+    borderColor: Colors.darkgrey,
+    marginRight: 5,
   },
 });

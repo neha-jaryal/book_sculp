@@ -59,7 +59,7 @@ export const PhoneNumberVerify = (props) => {
   // const [mobileNumber, setMobileNumber] = useState(basicDetails?.mobileNumber);
   // const [callingCode, setCallingCode] = useState(callingCode);
   const mobileNumberValid = Utility.isValidPhoneNumber(
-    mobileNumber || basicDetails?.mobileNumber
+    mobileNumber || basicDetails?.mobileNumber,
   );
 
   const handlePhoneVerify = async (val) => {
@@ -147,10 +147,14 @@ export const PhoneNumberVerify = (props) => {
           <View style={Styles.container}>
             <Lotties
               source={JSONS?.emailJSON}
-              style={{ width: "100%", marginTop: -15 }}
+              style={{ width: "100%", marginTop: -15, height: 150 }}
             />
             {changeSection ? (
-              <View style={{ marginTop: -50 }}>
+              <View style={{ marginTop: -60 }}>
+                <TextComponent
+                  text="Enter the phone number"
+                  style={{ textAlign: "center", marginBottom: 20 }}
+                />
                 <InputBox
                   type="phone"
                   value={mobileNumber || basicDetails?.mobileNumber}
@@ -168,14 +172,14 @@ export const PhoneNumberVerify = (props) => {
                   isEmpty={
                     error &&
                     Utility.isFieldEmpty(
-                      mobileNumber || basicDetails?.mobileNumber
+                      mobileNumber || basicDetails?.mobileNumber,
                     )
                   }
                 />
               </View>
             ) : (
               <>
-                <View style={{ marginTop: -50 }}>
+                <View style={{ marginTop: -60 }}>
                   <TextComponent text="Enter the 6-digits code sent to you" />
                   <View style={Styles?.row}>
                     <TextComponent text="at  " />

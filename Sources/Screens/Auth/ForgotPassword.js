@@ -62,7 +62,7 @@ export const ForgotPassword = ({ navigation }) => {
         <View style={Styles?.cardContainer}>
           <Lotties
             source={JSONS?.emailJSON}
-            style={{ width: "100%", marginTop: -15 }}
+            style={{ width: "100%", marginTop: -15, height: 150 }}
           />
           <View style={{ marginTop: -50 }}>
             <InputBox

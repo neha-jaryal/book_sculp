@@ -11,7 +11,7 @@ export const TermsOfService = ({ navigation }) => {
       <View style={Styles?.cardContainer}>
         <Lotties
           source={JSONS?.termsOfServiceJSON}
-          style={{ width: "100%", marginTop: -10 }}
+          style={{ width: "100%", marginTop: -10, height: 150 }}
         />
         <TextComponent
           text={`Introduction`}

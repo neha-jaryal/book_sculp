@@ -9,11 +9,11 @@ import {
 } from "react-native";
 import {
   Button,
-  InputBox,
   TextComponent,
   DropDownList,
   DashboardHeader,
   Loader,
+  InputBox,
 } from "../../Components";
 import { Sizes, Colors, Images } from "../../Constants";
 import { Styles } from "../../Styles";

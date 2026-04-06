@@ -338,17 +338,17 @@ export var timeSince = function (date) {
   if (years > 0) {
     return years === 1 ? `${years} year ago` : `${years} years ago`;
   } else if (months > 0) {
-    return months === 1 ? `${months} month ago` : `${months} months ago`;
+    return months === 1 ? `${months}m ago` : `${months}m ago`;
   } else if (weeks > 0) {
-    return weeks === 1 ? `${weeks} week ago` : `${weeks} weeks ago`;
+    return weeks === 1 ? `${weeks}w ago` : `${weeks}w ago`;
   } else if (days > 0) {
-    return days === 1 ? `${days} day ago` : `${days} days ago`;
+    return days === 1 ? `${days}d ago` : `${days}d ago`;
   } else if (hours > 0) {
-    return hours === 1 ? `${hours} hour ago` : `${hours} hours ago`;
+    return hours === 1 ? `${hours}hr ago` : `${hours}hrs ago`;
   } else if (minutes > 0) {
-    return minutes === 1 ? `${minutes} min ago` : `${minutes} mins ago`;
+    return minutes === 1 ? `${minutes}min ago` : `${minutes}mins ago`;
   } else {
-    return seconds === 1 ? `${seconds} sec ago` : `${seconds} secs ago`;
+    return seconds === 1 ? `${seconds}sec ago` : `${seconds}secs ago`;
   }
 };
 export const convertUTCToLocalTime = (date) => {

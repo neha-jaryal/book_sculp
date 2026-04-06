@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>book_sculp.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>1</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>423D0D7A5E8F5806FD956C194E587E2D705E7CC1</string>
+				<key>dateExpires</key>
+				<string>29/09/26</string>
+				<key>type</key>
+				<string>Cloud Managed Apple Distribution</string>
+			</dict>
+			<key>embeddedBinaries</key>
+			<array>
+				<dict>
+					<key>architectures</key>
+					<array>
+						<string>arm64</string>
+					</array>
+					<key>buildNumber</key>
+					<string>0.12.0</string>
+					<key>certificate</key>
+					<dict>
+						<key>SHA1</key>
+						<string>423D0D7A5E8F5806FD956C194E587E2D705E7CC1</string>
+						<key>dateExpires</key>
+						<string>29/09/26</string>
+						<key>type</key>
+						<string>Cloud Managed Apple Distribution</string>
+					</dict>
+					<key>name</key>
+					<string>hermesvm.framework</string>
+					<key>team</key>
+					<dict>
+						<key>id</key>
+						<string>D73KN3C6PV</string>
+						<key>name</key>
+						<string>Sculp Agency</string>
+					</dict>
+					<key>versionNumber</key>
+					<string>0.12.0</string>
+				</dict>
+			</array>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>D73KN3C6PV.com.sculpAgency</string>
+				<key>aps-environment</key>
+				<string>production</string>
+				<key>com.apple.developer.applesignin</key>
+				<array>
+					<string>Default</string>
+				</array>
+				<key>com.apple.developer.team-identifier</key>
+				<string>D73KN3C6PV</string>
+				<key>get-task-allow</key>
+				<false/>
+			</dict>
+			<key>name</key>
+			<string>book_sculp.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>fa88e175-116e-4071-9c28-b9b254d68273</string>
+				<key>dateExpires</key>
+				<string>23/11/26</string>
+				<key>name</key>
+				<string>iOS Team Ad Hoc Provisioning Profile: com.sculpAgency</string>
+			</dict>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>D73KN3C6PV</string>
+				<key>name</key>
+				<string>Sculp Agency</string>
+			</dict>
+			<key>versionNumber</key>
+			<string>6.1</string>
+		</dict>
+	</array>
+</dict>
+</plist>

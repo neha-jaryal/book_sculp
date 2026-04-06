@@ -61,7 +61,7 @@ export const ViewJobs = ({ route, navigation }) => {
   const tableData = [
     [
       moment(jobDetail?.post_meta_details?.starting_date).format(
-        "Do MMMM, YYYY"
+        "Do MMMM, YYYY",
       ),
       moment(jobDetail?.post_meta_details?.end_date).format("Do MMMM, YYYY"),
     ],
@@ -102,7 +102,7 @@ export const ViewJobs = ({ route, navigation }) => {
       handleProposalstatus();
       getAccountApprovalStatus();
       handleJobCost();
-    }, [])
+    }, []),
   );
   const handleJobCost = () => {
     let durationAmount = 0;
@@ -159,7 +159,7 @@ export const ViewJobs = ({ route, navigation }) => {
     if (res.status == 200) {
       let data = res?.results?.post_meta_details?.user_followers;
       data?.map((item) =>
-        item == userId ? setFollow(true) : setFollow(false)
+        item == userId ? setFollow(true) : setFollow(false),
       );
       setAutherData(res?.results);
     }
@@ -186,7 +186,7 @@ export const ViewJobs = ({ route, navigation }) => {
       name: "Arrival Time",
       value: jobDetail?.post_meta_details?.reached_time
         ? moment(new Date(jobDetail?.post_meta_details?.reached_time)).format(
-            "hh:mm a"
+            "hh:mm a",
           )
         : "",
     },
@@ -434,7 +434,7 @@ export const ViewJobs = ({ route, navigation }) => {
     }
   };
   const hasAnyRequirement = requirements.some(
-    (item) => String(item.value || "").trim() !== ""
+    (item) => String(item.value || "").trim() !== "",
   );
   return (
     <>
@@ -925,7 +925,7 @@ export const ViewJobs = ({ route, navigation }) => {
                               }}
                             />
                           );
-                        }
+                        },
                       )}
                     </View>
                   </View>
@@ -1103,7 +1103,7 @@ export const ViewJobs = ({ route, navigation }) => {
                                 />
                               </TouchableOpacity>
                             );
-                          }
+                          },
                         )}
                       </ScrollView>
                     </>
@@ -1225,7 +1225,7 @@ export const ViewJobs = ({ route, navigation }) => {
                         </View>
                         <View style={{ ...Styles?.separator }} />
                       </>
-                    )
+                    ),
                   )}
                 </View>
               </>

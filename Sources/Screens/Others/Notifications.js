@@ -37,7 +37,7 @@ export const Notifications = ({ navigation }) => {
   return (
     <>
       <Header text="Notifications" navigation={navigation} />
-      <View
+      {/* <View
         style={{
           ...Styles?.container,
           ...Styles?.row,
@@ -48,24 +48,35 @@ export const Notifications = ({ navigation }) => {
         }}
       >
         <TextComponent text="All Notifications" size={Sizes?.l} />
-      </View>
-      <ScrollView>
+      </View> */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* other?.isLoading ? null : */}
         {cardList?.length != 0 ? (
           <View
-            style={{
-              // ...Styles?.container,
-              width: "95%",
-              marginHorizontal: 10,
-            }}
+            style={
+              {
+                // ...Styles?.container,
+                // width: "95%",
+                // marginHorizontal: 10,
+              }
+            }
           >
             {cardList?.map((item) => {
               return (
-                <NotificationCard
-                  cardData={item}
-                  getAllNotifications={getAllNotifications}
-                  navigation={navigation}
-                />
+                <>
+                  <NotificationCard
+                    cardData={item}
+                    getAllNotifications={getAllNotifications}
+                    navigation={navigation}
+                  />
+                  {/* <View
+                    style={{
+                      ...Styles?.separator,
+                      marginVertical: 0,
+                      paddingVertical: 0,
+                    }}
+                  /> */}
+                </>
               );
             })}
           </View>

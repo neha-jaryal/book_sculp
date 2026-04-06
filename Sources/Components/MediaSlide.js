@@ -23,7 +23,7 @@ const MediaSlide = ({
   height = 500,
 }) => {
   const isVideo = item?.media_type === "video" || item?.type === "video";
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   // Heart animation on double-tap
@@ -99,7 +99,6 @@ const MediaSlide = ({
             />
           ) : (
             <View style={styles.container}>
-              {/* Blurred background image */}
               <Image
                 source={{ uri: item?.url }}
                 style={StyleSheet.absoluteFillObject} // fills the container

@@ -9,8 +9,7 @@ buildscript {
         targetSdkVersion = 35
 
         // Optional: Set a project-wide NDK version fallback
-        // ndkVersion = "25.2.9519653"   // Uncomment if you want global default
-        // or "28.0.12674087" for newer
+        // ndkVersion = "28.0.12674087"   // Recommended newer version
     }
 
     repositories {
@@ -19,13 +18,13 @@ buildscript {
     }
 
     dependencies {
-        // Android Gradle Plugin – use a recent stable version compatible with RN 0.83
-        classpath("com.android.tools.build:gradle:8.5.0")  // or 8.6+ if available in your AS
+        // Android Gradle Plugin – 8.5.0 is solid for RN in 2026
+        classpath("com.android.tools.build:gradle:8.5.0")
 
-        // Kotlin plugin (since you apply org.jetbrains.kotlin.android in app/build.gradle)
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")  // Match your Kotlin version
+        // Kotlin plugin - 1.9.24 works well with JVM 17 toolchain
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
 
-        // React Native itself handles its plugin via apply plugin: "com.facebook.react" in app/build.gradle
+        // React Native plugin is applied in app/build.gradle
     }
 }
 
@@ -36,16 +35,54 @@ allprojects {
 
         // Required for React Native local AARs and prefabs
         maven {
-            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
             url("$rootDir/../node_modules/react-native/android")
         }
 
-        // For some community libs or old deps
+        // For some community libs
         maven { url 'https://www.jitpack.io' }
     }
 }
 
-// Optional: Clean task for the whole project
+// Force consistent JVM 17 targets across ALL subprojects (app + all react-native-* libraries)
+subprojects {
+    afterEvaluate { project ->
+        // Only apply to Android modules and Kotlin-enabled ones
+        if (project.plugins.hasPlugin('com.android.application') ||
+            project.plugins.hasPlugin('com.android.library') ||
+            project.plugins.hasPlugin('kotlin-android')) {
+
+            android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+
+                // If the subproject has kotlinOptions block, force it
+                if (project.hasProperty('kotlinOptions')) {
+                    kotlinOptions {
+                        jvmTarget = "17"
+                    }
+                }
+            }
+
+            // Force all Kotlin compile tasks to JVM 17
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = "17"
+                }
+            }
+
+            // Modern best practice: Use JVM toolchain (auto-downloads JDK 17 if needed)
+            // This usually overrides stubborn library defaults
+            if (project.plugins.hasPlugin("org.jetbrains.kotlin.android")) {
+                kotlin {
+                    jvmToolchain(17)
+                }
+            }
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

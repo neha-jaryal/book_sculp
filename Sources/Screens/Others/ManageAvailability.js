@@ -18,9 +18,11 @@ import { Colors } from "../../Constants";
 import { Styles } from "../../Styles";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { showToast } from "../../Utility";
+import { useNavigation } from "@react-navigation/native";
 
-export const ManageAvailability = (props, { navigation }) => {
+export const ManageAvailability = (props) => {
   const { userId, readonly } = props;
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const selectionTimer = useRef(null);
 
@@ -236,7 +238,8 @@ export const ManageAvailability = (props, { navigation }) => {
     const dateObj = new Date(date);
 
     const existingEvent = events.find(
-      (event) => new Date(event.start).toDateString() === dateObj.toDateString()
+      (event) =>
+        new Date(event.start).toDateString() === dateObj.toDateString(),
     );
     if (existingEvent) {
       Alert.alert(
@@ -251,23 +254,23 @@ export const ManageAvailability = (props, { navigation }) => {
               removeEventsData(existingEvent);
               setSelectedCells((prev) =>
                 prev.filter(
-                  (d) => new Date(d).toDateString() !== dateObj.toDateString()
-                )
+                  (d) => new Date(d).toDateString() !== dateObj.toDateString(),
+                ),
               );
             },
           },
-        ]
+        ],
       );
       return;
     }
 
     const alreadySelected = selectedCells.some(
-      (d) => new Date(d).toDateString() === dateObj.toDateString()
+      (d) => new Date(d).toDateString() === dateObj.toDateString(),
     );
 
     const newSelection = alreadySelected
       ? selectedCells.filter(
-          (d) => new Date(d).toDateString() !== dateObj.toDateString()
+          (d) => new Date(d).toDateString() !== dateObj.toDateString(),
         )
       : [...selectedCells, dateObj];
 
@@ -296,7 +299,7 @@ export const ManageAvailability = (props, { navigation }) => {
           text: "Create",
           onPress: () => confirmEvent(selection),
         },
-      ]
+      ],
     );
   };
 
@@ -332,7 +335,7 @@ export const ManageAvailability = (props, { navigation }) => {
     };
     const formattedDate = formatYMDLocal(date);
     const isSelected = selectedCells.some(
-      (d) => formatYMDLocal(d) === formattedDate
+      (d) => formatYMDLocal(d) === formattedDate,
     );
     const eventExists = events.find((e) => {
       const start = formatYMDLocal(e.start);

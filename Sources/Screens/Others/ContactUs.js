@@ -86,6 +86,7 @@ export const ContactUs = ({ navigation }) => {
               marginTop: -10,
               marginBottom: 20,
               alignSelf: "center",
+              height : 150,
             }}
           />
           <View style={{ alignItems: "center" }}>

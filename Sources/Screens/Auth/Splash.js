@@ -41,7 +41,7 @@ export const Splash = ({ navigation }) => {
     if (res?.status == 200) {
       storeData(
         storageKey?.PAYMENT_STATUS,
-        JSON?.stringify(res?.results?.p_status)
+        JSON?.stringify(res?.results?.p_status),
       );
     }
   };
@@ -61,11 +61,11 @@ export const Splash = ({ navigation }) => {
           if (data?.delete_account_status == 0) {
             storeData(
               storageKey?.APPROVAL_STATUS,
-              JSON?.stringify(data?.profile_approval)
+              JSON?.stringify(data?.profile_approval),
             );
             storeData(
               storageKey?.USER_STATUS,
-              JSON?.stringify(data?.completed_step)
+              JSON?.stringify(data?.completed_step),
             );
             storeData(storageKey?.SUBSCRIPTION_HIDE, "false");
             let post_meta_details = res?.results?.post_meta_details;
@@ -105,7 +105,7 @@ export const Splash = ({ navigation }) => {
       } else {
         dispatch(navigatorStatus(routeName?.AUTHSTACKS, false));
       }
-    }, 2000);
+    }, 4000);
   };
 
   const networkStatus = async () => {
@@ -160,7 +160,11 @@ export const Splash = ({ navigation }) => {
     // />
     <Lotties
       source={JSONS?.splashJSON}
-      style={{ width: "100%", backgroundColor: Colors?.white }}
+      style={{
+        width: "100%",
+        backgroundColor: Colors?.white,
+        height: dimensionheight("100%"),
+      }}
     />
   );
 };

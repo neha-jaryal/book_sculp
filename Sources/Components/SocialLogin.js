@@ -66,20 +66,38 @@ const SocialLogin = (props) => {
     }
   };
 
+  // useEffect(() => {
+  //   GoogleSignin.configure({
+  //     webClientId:
+  //       "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+  //     iosClientId:
+  //       "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+  //     scopes: [
+  //       "https://www.googleapis.com/auth/userinfo.email",
+  //       "https://www.googleapis.com/auth/user.gender.read",
+  //       "https://www.googleapis.com/auth/userinfo.profile",
+  //       "https://www.googleapis.com/auth/user.birthday.read",
+  //       "openid",
+  //     ],
+  //     offlineAccess: true,
+  //   });
+  // }, []);
+
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId:
-        "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
-      iosClientId:
-        "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
-      scopes: [
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/user.gender.read",
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/user.birthday.read",
-        "openid",
-      ],
-    });
+    if (Platform.OS === "ios") {
+      GoogleSignin.configure({
+        iosClientId:
+          "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+        offlineAccess: false,
+      });
+    } else {
+      GoogleSignin.configure({
+        scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+        webClientId:
+          "646055473905-qos5st7u0a5knrnlahspdafvpv0a9076.apps.googleusercontent.com",
+        offlineAccess: true,
+      });
+    }
   }, []);
 
   const handleFirebaseLogin = async (email) => {
@@ -158,7 +176,7 @@ const SocialLogin = (props) => {
 
   const handleSocialData = async (result) => {
     setLoading(true);
-    const isNewUser = result.additionalUserInfo.isNewUser;
+    const isNewUser = result.additionalUserInfo?.isNewUser;
     const userData = result?.user;
     const emailExists = await handleEmailVerify(userData?.email);
     if (result?.user?.uid) {
@@ -347,69 +365,158 @@ const SocialLogin = (props) => {
   };
 
   const handleGoogleSignIn = async (type) => {
-    if (route == routeName?.SIGNUP) setSocialType(type);
+    console.log("Google login");
+
     try {
-      await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
+      if (route === routeName?.SIGNUP) {
+        setSocialType(type);
+      }
+
+      // Always sign out first to force account picker
+      await GoogleSignin.signOut();
+
+      // Check Play Services (Android only)
+      if (Platform.OS === "android") {
+        await GoogleSignin.hasPlayServices({
+          showPlayServicesUpdateDialog: true,
+        });
+      } else {
+        await GoogleSignin.hasPlayServices();
+      }
+
+      // Sign in user
       const userInfo = await GoogleSignin.signIn();
-      const { idToken, accessToken, user } = userInfo;
+      console.log("google user:", userInfo);
+
+      // Get tokens
+      const { idToken, accessToken } = await GoogleSignin.getTokens();
+      console.log("idToken:", idToken);
+
       if (!idToken) {
         throw new Error("No ID token returned from Google Sign-In");
       }
+
+      // Create Firebase credential
       const googleCredential = auth.GoogleAuthProvider.credential(
         idToken,
         accessToken,
       );
+
+      // Sign in with Firebase
       const firebaseUserCredential = await auth().signInWithCredential(
         googleCredential,
       );
+
+      console.log("Firebase user:", firebaseUserCredential);
+
       setUserCreds(firebaseUserCredential);
-      const firebaseUser = firebaseUserCredential.user;
-      if (firebaseUser) {
+
+      if (firebaseUserCredential?.user) {
         handleSocialData(firebaseUserCredential);
       }
     } catch (error) {
-      console.error("Google Sign-In error:", error);
-      throw error;
+      console.log("Google Sign-In error:", error);
     }
   };
 
   const handleAppleSignIn = async (type) => {
-    if (route == routeName?.SIGNUP) setSocialType(type);
-    const appleAuthRequestResponse = await appleAuth.performRequest({
-      requestedOperation: appleAuth.Operation.LOGIN,
-      requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
-    });
-    if (!appleAuthRequestResponse.identityToken) {
-      showToast("Apple Sign-In failed - no identify token returned", "error");
-    }
-    const {
-      identityToken,
-      nonce,
-      email,
-      fullName,
-      user,
-    } = appleAuthRequestResponse;
-    const appleCredential = auth.AppleAuthProvider.credential(
-      identityToken,
-      nonce,
-    );
-    const firebaseUserCredential = await auth().signInWithCredential(
-      appleCredential,
-    );
-    const firebase_user = auth().currentUser;
-    firebaseUserCredential.user.email = email;
-    firebaseUserCredential.user.displayName =
-      fullName?.givenName + " " + fullName?.familyName;
-    firebaseUserCredential.user.firstName = fullName?.givenName;
-    firebaseUserCredential.user.lastName = fullName?.familyName;
-    setUserCreds(firebaseUserCredential);
-    const firebaseUser = firebaseUserCredential.user;
-    if (firebaseUser) {
-      handleSocialData(firebaseUserCredential);
+    try {
+      if (!appleAuth.isSupported) return;
+
+      if (route === routeName?.SIGNUP) {
+        setSocialType(type);
+      }
+
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const { identityToken, fullName } = appleAuthRequestResponse;
+
+      if (!identityToken) {
+        throw new Error("Apple Sign-In failed - no identity token");
+      }
+
+      const appleCredential = auth.AppleAuthProvider.credential(
+        identityToken,
+        appleAuthRequestResponse.nonce,
+      );
+
+      const firebaseUserCredential = await auth().signInWithCredential(
+        appleCredential,
+      );
+
+      const firebaseUser = firebaseUserCredential.user;
+
+      // Update name only first time
+      if (firebaseUserCredential.additionalUserInfo?.isNewUser) {
+        if (fullName?.givenName) {
+          await firebaseUser.updateProfile({
+            displayName: `${fullName.givenName} ${fullName.familyName || ""}`,
+          });
+        }
+      }
+
+      setUserCreds(firebaseUserCredential);
+
+      if (firebaseUser) {
+        handleSocialData(firebaseUserCredential);
+      }
+    } catch (error) {
+      console.log("Apple Sign-In error:", error);
     }
   };
+
+  //   const handleAppleSignIn = async (type) => {
+  //     // part one
+  //  if (appleAuth.isSupported) {
+  //       const appleAuthRequestResponse = await appleAuth.performRequest({
+  //         requestedOperation: appleAuth.Operation.LOGIN,
+  //         requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+  //       });
+  //       console.log(appleAuthRequestResponse,'appleAuthRequestResponse');
+
+  //       // const credentialState = await appleAuth.getCredentialStateForUser(
+  //       //   appleAuthRequestResponse.user,
+  //       // );
+  //     }
+  //     return
+  //     // part two
+  //     if (route == routeName?.SIGNUP) setSocialType(type);
+  //     const appleAuthRequestResponse = await appleAuth.performRequest({
+  //       requestedOperation: appleAuth.Operation.LOGIN,
+  //       requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+  //     });
+  //     if (!appleAuthRequestResponse.identityToken) {
+  //       showToast("Apple Sign-In failed - no identify token returned", "error");
+  //     }
+  // const {
+  //   identityToken,
+  //   nonce,
+  //   email,
+  //   fullName,
+  //   user,
+  // } = appleAuthRequestResponse;
+  // const appleCredential = auth.AppleAuthProvider.credential(
+  //   identityToken,
+  //   nonce,
+  // );
+  // const firebaseUserCredential = await auth().signInWithCredential(
+  //   appleCredential,
+  // );
+  // const firebase_user = auth().currentUser;
+  // firebaseUserCredential.user.email = email;
+  // firebaseUserCredential.user.displayName =
+  //   fullName?.givenName + " " + fullName?.familyName;
+  // firebaseUserCredential.user.firstName = fullName?.givenName;
+  // firebaseUserCredential.user.lastName = fullName?.familyName;
+  // setUserCreds(firebaseUserCredential);
+  // const firebaseUser = firebaseUserCredential.user;
+  // if (firebaseUser) {
+  //   handleSocialData(firebaseUserCredential);
+  // }
+  //   };
 
   // const revokeFacebookToken = async () => {
   //   const data = await AccessToken.getCurrentAccessToken();

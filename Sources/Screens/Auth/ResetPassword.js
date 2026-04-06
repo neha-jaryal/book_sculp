@@ -65,7 +65,7 @@ export const ResetPassword = ({ route, navigation }) => {
         <View style={{ ...Styles?.cardContainer }}>
           <Lotties
             source={JSONS?.passordJSON}
-            style={{ width: "100%", marginTop: -15, marginLeft: 10 }}
+            style={{ width: "100%", marginTop: -15, marginLeft: 10, height: 150 }}
           />
           <View style={{ marginTop: -60 }}>
             <InputBox
